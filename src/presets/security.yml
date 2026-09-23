@@ -1,0 +1,71 @@
+rules:
+  - id: sec.sql-concat
+    description: SQL query built by concatenating or interpolating a data value
+    type: noul
+    severity: blocker
+    exclude_paths: ["**/*.test.*", "**/*.spec.*", "**/test/**", "**/tests/**", "**/e2e/**"]
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` put a data value, such as an id,
+      name, path, search text or other function argument holding data, directly into SQL text
+      by concatenation or interpolation, instead of passing it as a bound parameter?
+    criteria:
+      true: >-
+        A data value is placed into SQL text with +, template literals, f-strings or format(),
+        for example "WHERE id = " + id or f"WHERE name = '{name}'".
+      false: >-
+        No SQL, constant SQL, values passed through placeholders such as ?, $1 or :name, or
+        only SQL fragments, table names or column names that are defined in code are
+        interpolated, for example `DELETE FROM t WHERE ${WHERE_CLAUSE}` with ? placeholders
+        for the values.
+  - id: sec.hardcoded-secret
+    description: Hardcoded credential, API key, token or private key
+    type: noul
+    severity: blocker
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` contain a literal secret value such
+      as a password, API key, access token, client secret or private key?
+    criteria:
+      true: An added line contains a real-looking secret literal, not a placeholder.
+      false: Secrets are read from environment variables, config or a secret store, or the values are obvious placeholders like "changeme", "xxx" or "<token>".
+  - id: sec.command-injection
+    description: Shell command built from a variable
+    type: noul
+    severity: blocker
+    exclude_paths: ["**/*.test.*", "**/*.spec.*", "**/test/**", "**/tests/**", "**/e2e/**"]
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` run a shell or system command whose
+      command string is built by concatenating or interpolating a variable?
+    criteria:
+      true: A variable is placed into a command string passed to exec, system, spawn with shell=true, subprocess with shell=True, backticks or similar.
+      false: No commands are run, or arguments are passed as a separate array without a shell.
+  - id: sec.unsafe-html
+    description: Unescaped HTML rendering of dynamic data
+    type: noul
+    severity: major
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` insert a variable into HTML without
+      escaping, for example through innerHTML, outerHTML, document.write,
+      dangerouslySetInnerHTML, v-html, {@html} or a template "safe"/"raw" filter?
+    criteria:
+      true: A variable is written as raw HTML by one of these mechanisms and the added lines do not show it being sanitized.
+      false: >-
+        Dynamic values are rendered as text or through the framework's escaping, or the HTML
+        is sanitized (DOMPurify.sanitize, sanitize-html, a sanitizer function, or a comment
+        saying it is sanitized).
+  - id: sec.tls-verification-off
+    description: TLS certificate verification disabled
+    type: noul
+    severity: major
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` turn off TLS or SSL certificate
+      verification, for example verify=False, rejectUnauthorized false,
+      NODE_TLS_REJECT_UNAUTHORIZED=0, InsecureSkipVerify true or a certificate callback that
+      always returns true?
+  - id: sec.sensitive-logging
+    description: Sensitive data written to logs
+    type: noul
+    severity: major
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` write a password, token, API key,
+      authorization header, full card number or similar secret value to a log, console or
+      error message?

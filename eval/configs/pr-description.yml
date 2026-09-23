@@ -1,0 +1,2 @@
+# Config used to calibrate the jev:pr-description preset.
+extends: ["jev:pr-description"]

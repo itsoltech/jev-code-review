@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/your-org/jev-code-review/v1/schema/jev-review.schema.json
+# .github/jev-review.yml  (read from the PR base commit)
+extends: ["jev:recommended", "jev:style"]
+
+# Pin a version once thresholds are calibrated; aliases move without notice.
+model: jev-1.13.0
+
+files:
+  exclude: ["**/*.lock", "**/dist/**", "**/generated/**", "**/*.snap", "docs/**"]
+
+budget:
+  max_hunks: 120
+  concurrency: 6
+
+context:
+  max_hunk_lines: 80
+  location_strategy: eager   # two_phase: fewer tokens, one extra round trip for rules that fired
+
+uncertainty:
+  needs_human_band: [0.4, 0.7]
+  label: needs-human-review
+
+rules:
+  # Tune an inherited rule by id.
+  - id: sec.sql-concat
+    threshold: 0.75
+  # Turn one off.
+  - id: corr.todo-added
+    enabled: false
+  # A team rule: literal, narrow, one judgment per question.
+  - id: team.no-direct-db-in-controllers
+    description: Controller talks to the database directly
+    type: noul
+    severity: major
+    paths: ["src/controllers/**/*.ts"]
+    instructions: >-
+      Do the added lines (marked "+") in `changes.lines` call a database client, ORM model or
+      query builder directly, such as db.query, prisma.user.findMany or knex("users"),
+      instead of calling a service?
+    criteria:
+      true: An added line in the controller runs a database query itself.
+      false: Added lines only call services, parse requests or build responses.
+    template: |
+      **{{severity_label}}**: controllers should go through a service ({{probability|pct}}).
+      {{#needs_human}}_Uncertain: please double-check._{{/needs_human}}
+  # A choice rule: several labels, each with its own severity.
+  - id: team.error-response
+    description: How errors reach the client
+    type: choice
+    paths: ["src/api/**/*.ts"]
+    instructions: How do the added lines (marked "+") in `changes.lines` return errors to the HTTP client?
+    criteria:
+      no_errors: The added lines do not return errors to the client.
+      problem_details: Errors use the shared problemDetails() helper.
+      raw_message: Errors send exception messages or stack traces to the client.
+      other: Errors are returned some other way.
+    finding_labels:
+      raw_message: major
+      other: minor
+
+dimensions:
+  - id: readability
+    weight: 2
+  - id: change_focus
+    weight: 1
+
+policy:
+  request_changes: { severities: [blocker] }
+  fail_check: { severities: [blocker], composite_below: 0.3 }
+  approve:
+    enabled: false          # requires "Allow GitHub Actions to create and approve pull requests"
+    max_findings: { blocker: 0, major: 0, minor: 3 }
+    composite_at_least: 0.8
+  on_error: neutral
+
+output:
+  max_inline_comments: 20
+  review_events: full       # comment_only: never REQUEST_CHANGES, block through the check
+  check_run: false
+
+skip:
+  drafts: true
+  labels: ["skip-jev"]

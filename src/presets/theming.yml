@@ -1,0 +1,17 @@
+# UI colors come from theme tokens.
+vars:
+  style_paths: ["**/*.svelte", "**/*.css", "**/*.scss", "**/*.vue", "**/*.tsx", "**/*.jsx"]
+  # Lines that may keep literal colors: black box-shadows and comments.
+  color_ignore_regex: 'box-shadow.*(rgba\(0,\s*0,\s*0|oklch\(0 0 0)|^\s*(//|/\*|\*)'
+
+rules:
+  - id: theming.hardcoded-color
+    description: 'Hardcoded color instead of a theme token such as {{vars.theme_token_example?}}'
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.style_paths}}"]
+    exclude_paths: ["{{vars.color_exempt_paths?}}"]
+    regex: '#[0-9a-fA-F]{3,8}\b|rgba?\(|oklch\(|hsla?\('
+    ignore_regex: '{{vars.color_ignore_regex}}'

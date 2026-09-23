@@ -1,0 +1,12 @@
+extends: ["jev:security", "jev:correctness", "jev:tests"]
+dimensions:
+  - id: change_focus
+    description: Pull request stays on one topic
+    scope: pr
+    weight: 1
+    instructions: Using `pr` and `files`, how focused is this pull request on a single purpose?
+    criteria:
+      - Unrelated changes across many areas.
+      - Mostly one purpose with several unrelated changes.
+      - One purpose with a small unrelated change.
+      - One clear purpose.

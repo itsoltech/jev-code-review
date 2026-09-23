@@ -1,0 +1,865 @@
+{
+ "rule": "errors.try-catch-outside-boundaries",
+ "guide": "Follows the allowed list in canopy CLAUDE.md literally, with no additions: try/catch is allowed only for PTY or process cleanup (kill, taskkill, tmux kill-session), HTTP request parsing, JSON.parse on untrusted input, contextBridge initialization, and file cleanup (rm/unlink of files the code created, or cleanup in finally); try/finally without catch is not a try/catch. Everything else in main-process code is a violation, including new URL, YAML parsing, closing views or servers, chmod, unsubscribe, crash reporter code, IPC handlers, and catch blocks that convert to err() instead of using fromExternalCall(). A team that wants any of these allowed should add it to CLAUDE.md first; the labels and the rule then follow.",
+ "labeled_by": "Claude, 2026-09-23, from reading each hunk",
+ "items": [
+  {
+   "pr": 187,
+   "path": "src/main/remote/CertificateProvider.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "cache read failure returns null",
+   "try_index": 0
+  },
+  {
+   "pr": 139,
+   "path": "src/main/agents/adapters/opencode.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "rmSync temp cleanup; JSON.parse of settings"
+  },
+  {
+   "pr": 239,
+   "path": "src/main/index.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "realpath failure swallowed"
+  },
+  {
+   "pr": 66,
+   "path": "src/main/taskTracker/providers/jira.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "Jira fetch returns null",
+   "try_index": 0
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/RemoteClientHost.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "statSync returns false",
+   "try_index": 0
+  },
+  {
+   "pr": 187,
+   "path": "src/main/remote/SignalingServer.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "server close failure ignored (not PTY)"
+  },
+  {
+   "pr": 66,
+   "path": "src/main/taskTracker/providers/youtrack.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "YouTrack fetch returns null",
+   "try_index": 0
+  },
+  {
+   "pr": 55,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 4,
+   "label": "violation",
+   "note": "view removal and debugger.attach failures swallowed",
+   "try_index": 1
+  },
+  {
+   "pr": 219,
+   "path": "src/main/security/validateUrl.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "new URL is not in the allowed list; DNS lookup returns false",
+   "try_index": 1
+  },
+  {
+   "pr": 4,
+   "path": "src/main/db/PreferencesStore.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "decryption falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 55,
+   "path": "src/main/db/CredentialStore.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "decryption falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 152,
+   "path": "src/main/crash/NativeCrashReader.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "crash reader readdir failure swallowed; CLAUDE.md has no crash-reporter exception"
+  },
+  {
+   "pr": 77,
+   "path": "src/main/pty/WsBridge.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL is not in the allowed list"
+  },
+  {
+   "pr": 33,
+   "path": "src/main/agents/AgentSessionManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "chmod failure ignored"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/index.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "readFile failure ignored",
+   "try_index": 0
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/SkillInstaller.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "stat failure converted with catch instead of fromExternalCall"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/index.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "realpath failure swallowed"
+  },
+  {
+   "pr": 259,
+   "path": "src/main/crash/CrashReporter.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "crash reporter swallows errors; no exception in CLAUDE.md"
+  },
+  {
+   "pr": 235,
+   "path": "src/main/git/GitWatcher.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "git refresh failure only logged",
+   "try_index": 0
+  },
+  {
+   "pr": 219,
+   "path": "src/main/db/types.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse of stored input"
+  },
+  {
+   "pr": 22,
+   "path": "src/main/changelog/fetchChangelog.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "fetch returns null",
+   "try_index": 0
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/transformers/cursor.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "unlink before symlink is not cleanup"
+  },
+  {
+   "pr": 152,
+   "path": "src/main/git/GitRepository.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "readFile failure converted with catch instead of fromExternalCall"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/transformers/opencode.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "unlink before symlink"
+  },
+  {
+   "pr": 250,
+   "path": "src/main/worktree/WorktreeSetupRunner.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "lstat try/catch in domain code"
+  },
+  {
+   "pr": 33,
+   "path": "src/main/agents/adapters/gemini.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "model limits file read falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 66,
+   "path": "src/main/taskTracker/TaskTrackerManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "tracker lookup failure ignored",
+   "try_index": 1
+  },
+  {
+   "pr": 36,
+   "path": "src/main/changelog/fetchChangelog.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "release fetch returns default",
+   "try_index": 0
+  },
+  {
+   "pr": 94,
+   "path": "src/main/taskTracker/TaskTrackerManager.ts",
+   "hunk": 1,
+   "label": "allowed",
+   "note": "rmSync temp cleanup"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/teamcityAccess.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL not allowed"
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/TrustedDeviceStore.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 158,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "new URL in a main-process event handler"
+  },
+  {
+   "pr": 140,
+   "path": "src/main/crash/CrashReporter.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "crash reporter swallows errors"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "ENOENT mapped to boolean"
+  },
+  {
+   "pr": 36,
+   "path": "src/main/index.ts",
+   "hunk": 1,
+   "label": "allowed",
+   "note": "try/finally without catch"
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/CertificateProvider.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "readFileSync inside the catch"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/transformers/gemini.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "unlink before symlink"
+  },
+  {
+   "pr": 181,
+   "path": "src/main/taskTracker/TaskTrackerManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/security/validateUrl.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 90,
+   "path": "src/main/taskTracker/TaskTrackerManager.ts",
+   "hunk": 1,
+   "label": "allowed",
+   "note": "rmSync temp cleanup"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/teamcity.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "catch converts a validation throw to a callback error"
+  },
+  {
+   "pr": 118,
+   "path": "src/main/taskTracker/GlobalConfigManager.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/SkillParser.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "access() returns false",
+   "try_index": 0
+  },
+  {
+   "pr": 114,
+   "path": "src/main/git/GitWatcher.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "unsubscribe failure ignored"
+  },
+  {
+   "pr": 146,
+   "path": "src/main/profiles/ProfileStore.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "decryption falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 324,
+   "path": "src/main/taskTracker/providers/jira.ts",
+   "hunk": 2,
+   "label": "allowed",
+   "note": "JSON.parse of an error body"
+  },
+  {
+   "pr": 148,
+   "path": "src/main/git/GitWatcher.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "git refresh failure ignored",
+   "try_index": 0
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/transformers/claude.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "unlink before symlink"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/prSummary.ts",
+   "hunk": 2,
+   "label": "allowed",
+   "note": "JSON.parse of gh output"
+  },
+  {
+   "pr": 64,
+   "path": "src/main/pty/TmuxManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "tmux probe returns false/null",
+   "try_index": 0
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/github-actions/client.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "fetch failure converted with catch instead of fromExternalCall"
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/runConfigCommands.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "PTY kill and rethrow; try/finally"
+  },
+  {
+   "pr": 239,
+   "path": "src/main/commands/tabCommands.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "PTY kill and rethrow"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 3,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/skills/SkillScanner.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "access/readdir failures return empty",
+   "try_index": 0
+  },
+  {
+   "pr": 151,
+   "path": "src/main/settings/SettingsExport.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "catch converted to errAsync instead of Result code"
+  },
+  {
+   "pr": 33,
+   "path": "src/main/agents/adapters/claude.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "unlink settings file cleanup; JSON.parse"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/db/PreferencesStore.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "decryption falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 238,
+   "path": "src/main/pty/PtyManager.ts",
+   "hunk": 4,
+   "label": "allowed",
+   "note": "process tree kill (PTY cleanup)"
+  },
+  {
+   "pr": 138,
+   "path": "src/main/agents/adapters/codex.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": ".gitignore read/write failures ignored",
+   "try_index": 0
+  },
+  {
+   "pr": 3,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "closeDevTools failure ignored"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 1,
+   "label": "allowed",
+   "note": "file handle close in finally"
+  },
+  {
+   "pr": 151,
+   "path": "src/main/tools/ToolRegistry.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "catches its own validation throw"
+  },
+  {
+   "pr": 244,
+   "path": "src/main/github/GitHubService.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 324,
+   "path": "src/main/taskTracker/providers/youtrack.ts",
+   "hunk": 3,
+   "label": "allowed",
+   "note": "JSON.parse of an error body"
+  },
+  {
+   "pr": 66,
+   "path": "src/main/taskTracker/prCreation.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "gh probe false; git push failure ignored",
+   "try_index": 0
+  },
+  {
+   "pr": 152,
+   "path": "src/main/crash/CrashReporter.ts",
+   "hunk": 3,
+   "label": "violation",
+   "note": "crash reporter stat returns 0"
+  },
+  {
+   "pr": 338,
+   "path": "src/main/pty/PtyManager.ts",
+   "hunk": 2,
+   "label": "allowed",
+   "note": "PTY kill"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 4,
+   "label": "allowed",
+   "note": "temp file cleanup in finally"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 5,
+   "label": "allowed",
+   "note": "temp file cleanup in finally"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/taskTracker/KeychainTokenStore.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 126,
+   "path": "src/main/runConfig/RunConfigManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "YAML parse and readdir in catch",
+   "try_index": 1
+  },
+  {
+   "pr": 314,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/SignalingServer.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "listen retry and server close in try/catch"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/credentials/CredentialRegistry.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/KeychainTokenStore.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 31,
+   "path": "src/main/changelog/fetchChangelog.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "fetch returns null",
+   "try_index": 0
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/CiManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "catch converted to err()"
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/tabCommands.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "JSON.parse; tmux session kill (PTY cleanup)"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/github-actions/workflow.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "YAML decode in try/catch"
+  },
+  {
+   "pr": 151,
+   "path": "src/main/db/PreferencesStore.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "decryption falls back",
+   "try_index": 0
+  },
+  {
+   "pr": 55,
+   "path": "src/main/index.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 262,
+   "path": "src/main/commands/tabCommands.ts",
+   "hunk": 4,
+   "label": "allowed",
+   "note": "PTY cleanup and rethrow"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/config.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  },
+  {
+   "pr": 129,
+   "path": "src/main/pty/PtyManager.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "PTY getter failure returns null (not cleanup)"
+  },
+  {
+   "pr": 18,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "stat failure returns null"
+  },
+  {
+   "pr": 52,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 1,
+   "label": "allowed",
+   "note": "try/finally without catch"
+  },
+  {
+   "pr": 55,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "label": "violation",
+   "note": "Touch ID and PowerShell failures return null"
+  },
+  {
+   "pr": 64,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "allowed",
+   "note": "tmux session kill (PTY cleanup)"
+  },
+  {
+   "pr": 66,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 74,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "DB errors hidden when closed"
+  },
+  {
+   "pr": 83,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "auth failures return false"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 4,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 5,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 94,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 6,
+   "label": "violation",
+   "note": "gh pr view returns null"
+  },
+  {
+   "pr": 114,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "allowed",
+   "note": "JSON.parse"
+  },
+  {
+   "pr": 132,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "gh failures converted in catch"
+  },
+  {
+   "pr": 151,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "file read/write in try/catch"
+  },
+  {
+   "pr": 159,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "auth failures return false"
+  },
+  {
+   "pr": 175,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "realpath falls back"
+  },
+  {
+   "pr": 183,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 1,
+   "label": "violation",
+   "note": "hasChildProcess failure returns false"
+  },
+  {
+   "pr": 183,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "label": "violation",
+   "note": "git ls-files returns null; readdir returns"
+  },
+  {
+   "pr": 198,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "access() in try/catch loop"
+  },
+  {
+   "pr": 217,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 7,
+   "label": "violation",
+   "note": "path validation failure returns 'main'"
+  },
+  {
+   "pr": 217,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 14,
+   "label": "violation",
+   "note": "realpath in try/catch"
+  },
+  {
+   "pr": 227,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 12,
+   "label": "violation",
+   "note": "realpath in try/catch"
+  },
+  {
+   "pr": 231,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "label": "violation",
+   "note": "realpath falls back; access loop"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 4,
+   "label": "violation",
+   "note": "validation, stat, access and open in try/catch"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 16,
+   "label": "violation",
+   "note": "git failure retried in catch"
+  },
+  {
+   "pr": 324,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 18,
+   "label": "violation",
+   "note": "gh failures return ''"
+  },
+  {
+   "pr": 324,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 20,
+   "label": "violation",
+   "note": "gh returns null; readdir cleanup loop"
+  },
+  {
+   "pr": 338,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 2,
+   "label": "violation",
+   "note": "worktree add failure handled in catch"
+  },
+  {
+   "pr": 338,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 4,
+   "label": "allowed",
+   "note": "worktree directory rm cleanup"
+  },
+  {
+   "pr": 342,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 0,
+   "label": "allowed",
+   "note": "temp dir cleanup in finally"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 15,
+   "label": "allowed",
+   "note": "JSON.parse of gh output"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/keychainCredentials.ts",
+   "hunk": 0,
+   "label": "violation",
+   "note": "new URL"
+  }
+ ]
+}

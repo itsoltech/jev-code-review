@@ -1,0 +1,94 @@
+# Electron process boundaries.
+vars:
+  main_paths: ["src/main/**"]
+  renderer_paths: ["src/renderer/**"]
+  preload_paths: ["src/preload/**"]
+  renderer_forbidden_modules: [electron, fs, path, os, child_process, crypto]
+  sync_fs_paths: ["src/main/**"]
+  input_validators: [a path validation function, an allowlist check]
+  # feature:action, optionally with more segments (db:prefs:set)
+  ipc_channel_pattern: '[a-z][a-zA-Z0-9-]*(:[a-z][a-zA-Z0-9-]*)+'
+  # Lines that choose a label per platform are fine.
+  platform_guard_regex: 'isMac|isWindows|platform|darwin|win32|linux|modKey|modifierLabel|accelerator'
+
+rules:
+  - id: electron.renderer-node-import
+    description: Renderer imports a Node.js or Electron module; go through the preload bridge
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: blocker
+    paths: ["{{vars.renderer_paths}}"]
+    regex: '(from|import|require\()\s*[''"]({{vars.renderer_forbidden_modules|regex}}|node:[^''"]+)[''"]'
+  - id: electron.os-specific-label
+    description: macOS- or Windows-only label in shared UI
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.renderer_paths}}", "{{vars.menu_paths?}}"]
+    regex: '(Reveal|Show|Open) in (Finder|Explorer)'
+    ignore_regex: '{{vars.platform_guard_regex}}'
+  - id: electron.ipc-send-on
+    description: Renderer-to-main IPC through send/on; use invoke/handle
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.main_paths}}", "{{vars.preload_paths}}", "{{vars.renderer_paths}}"]
+    regex: '\b(ipcRenderer\.send|ipcMain\.on)\('
+  - id: electron.ipc-channel-name
+    description: 'IPC channel name does not follow the feature:action convention'
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.main_paths}}"]
+    regex: 'ipcMain\.(handle|on)\(\s*[''"](?!{{vars.ipc_channel_pattern}}[''"])'
+  - id: electron.preload-generic-invoke
+    description: Preload forwards a caller-chosen channel; expose one typed function per action
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: major
+    paths: ["{{vars.preload_paths}}"]
+    regex: 'ipcRenderer\.(invoke|send)\(\s*[A-Za-z_$][\w$]*\s*[,)]'
+  - id: electron.sync-fs-main
+    description: Synchronous file system call in the main process
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.sync_fs_paths}}"]
+    exclude_paths: ["{{vars.test_paths?}}"]
+    regex: '\b(readFileSync|writeFileSync|appendFileSync|existsSync|statSync|lstatSync|readdirSync|mkdirSync|rmSync|unlinkSync|copyFileSync|renameSync|realpathSync|accessSync|mkdtempSync)\('
+  - id: electron.shortcut-label-os
+    description: Keyboard shortcut label names only Cmd or only Ctrl instead of adapting to the OS
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.renderer_paths}}", "{{vars.menu_paths?}}"]
+    regex: '[''"`][^''"`]*\b(Cmd|Ctrl|⌘)\s*\+\s*\w'
+    # A label that shows both modifiers (Cmd/Ctrl+S) adapts by itself.
+    ignore_regex: '{{vars.platform_guard_regex}}|(Cmd|⌘)\s*/\s*Ctrl|Ctrl\s*/\s*(Cmd|⌘)'
+    exclude_paths: ["{{vars.platform_specific_paths?}}"]
+  - id: electron.ipc-unvalidated-input
+    description: IPC handler uses a value from the renderer without validating it
+    type: noul
+    severity: blocker
+    paths: ["{{vars.main_paths}}"]
+    instructions: >-
+      Does an added IPC handler (ipcMain.handle or ipcMain.on) in `changes.lines` pass a value
+      that comes from the renderer (the handler's arguments or payload) into a file system
+      call, a URL opener or network request, a shell, git or other command, a database query,
+      or a size-dependent allocation, without validating that value first? Validation means
+      checking its type, format, allowed values or size, or passing it through
+      {{vars.input_validators}}.
+    criteria:
+      true: >-
+        For example payload.repoRoot passed to a git command, a url passed to
+        shell.openExternal, or payload.filePath passed to fs, with no check before it.
+      false: >-
+        No IPC handler is added, the handler passes no renderer value to such a call, or every
+        such value is checked or validated before it is used.

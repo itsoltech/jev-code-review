@@ -1,0 +1,859 @@
+{
+ "rule": "svelte.effect-as-derived",
+ "guide": "code-review.md, Svelte 5 patterns: using $effect for data transformations instead of $derived. Violation: the effect body only reads reactive values and assigns values computed from them to local state, with no other effect. Clean: the effect touches the DOM, calls an API or store, dispatches events, runs async work, or initializes once behind a guard. Syncing an editable draft from a prop is left out (ambiguous). Filling an editable field from a prop when it is empty is also left out.",
+ "labeled_by": "Claude, 2026-09-23",
+ "items": [
+  {
+   "pr": 1,
+   "path": "src/renderer/src/components/dialogs/AboutModal.svelte",
+   "code": "    $effect(() => {\n      node.innerHTML = content()\n    })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  $effect(() => {\n    window.api.setBrowserVisible(browserId, active)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/browser/BrowserToolbar.svelte",
+   "code": "  $effect(() => {\n    if (document.activeElement !== urlInput) {\n      inputValue = url\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "code": "  $effect(() => {\n    const anyOverlayOpen = dialogState.current.type !== 'none' || paletteOpen\n    window.dispatchEvent(\n      new CustomEvent(anyOverlayOpen ? 'canopy:freeze-browsers' : 'canopy:unfreeze-browsers'),\n    )\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 8,
+   "path": "src/renderer/src/components/shared/CustomSelect.svelte",
+   "code": "  $effect(() => {\n    if (open && listEl && focusedIndex >= 0) {\n      const item = listEl.children[focusedIndex] as HTMLElement | undefined\n      item?.scrollIntoView({ block: 'nearest' })\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 8,
+   "path": "src/renderer/src/components/shared/CustomSelect.svelte",
+   "code": "  $effect(() => {\n    if (open && listEl) {\n      listEl.focus()\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 18,
+   "path": "src/renderer/src/components/editor/EditorPane.svelte",
+   "code": "  $effect(() => {\n    void filePath\n    loadFile()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 18,
+   "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+   "code": "  $effect(() => {\n    const wt = workspaceState.selectedWorktreePath\n    if (wt !== fileTree.rootPath) {\n      fileTree.reset(wt)\n      if (wt) {\n        fileTree.expandDir(wt)\n        if (workspaceState.repoRoot) {\n          fileTree.refreshGitStatus(workspaceState.repoRoot)\n        }\n      }\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 25,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "code": "  $effect(() => {\n    const path = workspaceState.selectedWorktreePath\n    if (path) clearWorktreeBadge(path)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 32,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "code": "  $effect(() => {\n    if (!active && webglAddonRef) {\n      webglAddonRef.dispose()\n      webglAddonRef = null\n      webglAttached = false\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 57,
+   "path": "src/renderer/src/App.svelte",
+   "code": "  $effect(() => {\n    applyAppTheme(getTheme(prefs.theme || 'Default'))\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 62,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  $effect(() => {\n    if (devtoolsVisible) {\n      sendDevToolsBounds()\n    } else if (devtoolsOpen) {\n      // Hide the native view but keep DevTools alive\n      window.api.setBrowserDevToolsBounds(browserId, { x: 0, y: 0, width: 0, height: 0 })\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 63,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "code": "  $effect(() => {\n    const anyOverlayOpen = dialogState.current.type !== 'none' || paletteOpen\n    window.dispatchEvent(\n      new CustomEvent('canopy:app-overlay', { detail: { open: anyOverlayOpen } }),\n    )\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/preferences/TerminalPrefs.svelte",
+   "code": "  $effect(() => {\n    if (tmuxEnabled) {\n      refreshSessionCount()\n    } else {\n      sessionCount = null\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/preferences/TaskTrackerPrefs.svelte",
+   "code": "  $effect(() => {\n    const ids = connections.map((c) => c.id)\n    for (const id of ids) {\n      loadBoardsForConnection(id)\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  $effect(() => {\n    const nextActive = active\n    const stableBrowserId = untrack(() => browserId)\n\n    if (!backgroundThrottlingInitialized) {\n      backgroundThrottlingInitialized = true\n      if (nextActive) return\n    }\n\n    window.api.setBrowserBackgroundThrottling(stableBrowserId, !nextActive).catch(() => {})\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "code": "  $effect(() => {\n    void worktreePath\n    refresh()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "code": "  $effect(() => {\n    fileCount = totalFiles\n  })",
+   "label": "violation",
+   "note": "only copies totalFiles into fileCount"
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/layout/RightPanel.svelte",
+   "code": "  $effect(() => {\n    workspaceState.changesCount = changesFileCount\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 97,
+   "path": "src/renderer/src/components/sidebar/ProjectTreeSection.svelte",
+   "code": "  $effect(() => {\n    const connCount = githubConnectionCount\n    if (connCount === 0) return\n    const deps = projects.map((p) => p.worktrees.length)\n    void deps\n    const force = connCount !== prevGhConnCount\n    prevGhConnCount = connCount\n    for (const p of projects) {\n      if (p.isGitRepo && p.repoRoot) loadBranchPRs(p.repoRoot, force)\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 97,
+   "path": "src/renderer/src/components/sidebar/WorktreeSection.svelte",
+   "code": "  $effect(() => {\n    const repoRoot = workspaceState.repoRoot\n    void workspaceState.worktrees.length\n    const connCount = githubConnectionCount\n    if (!repoRoot || connCount === 0) return\n    const force = connCount !== prevGhConnCount\n    prevGhConnCount = connCount\n    loadBranchPRs(repoRoot, force)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/preferences/FileWatcherPrefs.svelte",
+   "code": "  $effect(() => {\n    // Read prefs to establish reactivity\n    void prefs['files.ignorePatterns']\n    patterns = readPatterns()\n  })",
+   "label": "violation",
+   "note": "only recomputes patterns from prefs"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/runConfig/RunConfigForm.svelte",
+   "code": "  $effect(() => {\n    if (config) loadConfig(config)\n    else resetForm()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/shared/Tooltip.svelte",
+   "code": "  $effect(() => {\n    return () => {\n      if (timer) clearTimeout(timer)\n      timer = null\n      hidePortal()\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/sidebar/RunConfigSection.svelte",
+   "code": "  $effect(() => {\n    if (repoRoot) discoverConfigs()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/dialogs/RemoteConnectionModal.svelte",
+   "code": "  $effect(() => {\n    if (!pairingUrl || !qrEl) return\n    if (qrInstance) {\n      qrInstance.update({ data: pairingUrl })\n      return\n    }\n    // Pull the dot color from the active theme so the QR is still\n    // readable in light themes \u2014 hardcoded #e0e0e0 would be almost\n    // invisible on a light background. The canopy-green corner\n    // markers stay hardcoded because they're brand identity tied to\n    // the tree-crown logo in the center of the code.\n    const style = getComputedStyle(document.documentElement)\n    const dotColor = style.getPropertyValue('--c-text').trim() || '#e0e0e0'\n    qrInstance = new QRCodeStyling({\n      width: 260,\n      height: 260,\n      type: 'svg',\n      data: pairingUrl,\n      image: appIconUrl,\n      dotsOptions: { color: dotColor, type: 'rounded' },\n      backgroundOptions: { color: 'transparent' },\n      // Corner markers in the same canopy-green as the tree crown in\n      // the app icon, so the QR pulls visual identity from the\n      // embedded logo instead of fighting it with a blue accent.\n      cornersSquareOptions: { color: '#6bb04f', type: 'extra-rounded' },\n      cornersDotOptions: { color: '#6bb04f' },\n      // H-level error correction so the embedded image doesn't make the\n      // QR unscannable \u2014 H tolerates ~30% of the code being obscured,\n      // leaving plenty of redundancy for a centered logo.\n      qrOptions: { errorCorrectionLevel: 'H' },\n      imageOptions: {\n        crossOrigin: 'anonymous',\n        // 20% of the QR width \u2248 52px logo inside a 260px code. Anything\n        // larger starts to cover too many data modules even at H-level.\n        imageSize: 0.2,\n        // Small transparent ring around the logo so it visually detaches\n        // from the surrounding modules.\n        margin: 4,\n        hideBackgroundDots: true,\n      },\n    })\n    // qrEl is a plain `bind:this` container that Svelte never writes to,\n    // so appending qr-code-styling's SVG into it doesn't conflict with the\n    // Svelte reconciler. Subsequent URL changes hit the `update()` fast path\n    // above and never re-append.\n    qrInstance.append(qrEl)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/RemoteApp.svelte",
+   "code": "  $effect(() => {\n    if (!mirrorState.hydrated) return\n    if (autoSelectDone) return\n    autoSelectDone = true\n    const active = mirrorState.activeWorktreePath\n    if (!active) return\n    const owning = mirrorState.projects.find((p) =>\n      p.isGitRepo ? p.worktrees.some((wt) => wt.path === active) : p.path === active,\n    )\n    if (owning) {\n      selectedProjectId = owning.id\n      selectedWorktreePath = active\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/components/RemoteTerminalView.svelte",
+   "code": "  $effect(() => {\n    const isOpen = keyboardOpen\n    if (isOpen && !prevKeyboardOpen) {\n      // Keyboard just opened \u2014 scroll to bottom.\n      if (term && scrollEl) {\n        requestAnimationFrame(() => {\n          term?.scrollToBottom()\n          if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight\n          scheduleAutoFollow()\n        })\n      }\n    } else if (!isOpen && prevKeyboardOpen) {\n      // Keyboard just closed \u2014 the scroll container has grown back to\n      // full viewport height. Refit the PTY so its rows match the new\n      // space instead of being stuck at the shrunken dimensions from\n      // when we last measured.\n      requestAnimationFrame(() => {\n        void requestPeerFit()\n      })\n    }\n    prevKeyboardOpen = isOpen\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 131,
+   "path": "src/renderer/src/components/layout/StatusBar.svelte",
+   "code": "  $effect(() => {\n    if (perfHudEnabled) {\n      enablePerfHud()\n      return () => {\n        disablePerfHud()\n      }\n    }\n    return undefined\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/drawing/DrawingPane.svelte",
+   "code": "  $effect(() => {\n    const k = getDrawingKey()\n    const localStrokes = strokes\n    untrack(() => {\n      if (k !== currentKey) {\n        if (currentKey) drawingsState[currentKey] = [...localStrokes]\n        currentKey = k\n        strokes = k ? [...(drawingsState[k] ?? [])] : []\n        selectedIds.clear()\n        panX = 0\n        panY = 0\n      } else if (currentKey) {\n        drawingsState[currentKey] = [...localStrokes]\n      }\n    })\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/drawing/DrawingPane.svelte",
+   "code": "  $effect(() => {\n    void strokes.length\n    void liveStroke\n    void marquee\n    void selectedIds.size\n    void panX\n    void panY\n    doRedraw()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/notes/NotesPane.svelte",
+   "code": "  $effect(() => {\n    const raw = content\n    const gen = ++parseGen\n    if (!raw.trim()) {\n      previewHtml = ''\n      return\n    }\n    Promise.resolve(marked.parse(raw)).then((html) => {\n      // Drop stale results from earlier, slower parses.\n      if (gen !== parseGen) return\n      previewHtml = DOMPurify.sanitize(html)\n    })\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/notes/NotesPane.svelte",
+   "code": "    $effect(() => {\n      node.innerHTML = html()\n    })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 165,
+   "path": "src/renderer/src/lib/remote/StateSnapshotProvider.svelte.ts",
+   "code": "        $effect(() => {\n          rpc.emit('profiles', serializeProfiles())\n        })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 170,
+   "path": "src/renderer/src/components/terminal/PaneTabStrip.svelte",
+   "code": "  $effect(() => {\n    return () => {\n      window.removeEventListener('pointermove', handleDragMove)\n      window.removeEventListener('pointerup', handleDragEnd)\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/editor/CodeMirrorEditor.svelte",
+   "code": "  $effect(() => {\n    if (!view) return\n    if (readOnly === lastReadOnly) return\n    lastReadOnly = readOnly\n    view.dispatch({\n      effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),\n    })\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "code": "  $effect(() => {\n    const path = workspaceState.selectedWorktreePath\n    if (path) prefetchOnIdle(path)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/palette/QuickOpen.svelte",
+   "code": "  $effect(() => {\n    void query\n    void files\n    selectedIndex = 0\n    if (query.length === 0 || files.length === 0) {\n      matchedResults = []\n      return\n    }\n    const mru = getMru(worktreePath)\n    const mruBoost: Record<string, number> = {}\n    mru.forEach((p, idx) => (mruBoost[p] = (mru.length - idx) * 0.5))\n    const matches = fuzzysort.go(query, files, { limit: MAX_RESULTS, threshold: -10000 })\n    const scored = matches.map((m) => {\n      const rank = mruBoost[m.target] ?? 0\n      return {\n        target: m.target,\n        path: m.target,\n        score: m.score + rank,\n        indexes: [...m.indexes],\n        fromMru: rank > 0,\n      }\n    })\n    scored.sort((a, b) => b.score - a.score)\n    matchedResults = scored\n  })",
+   "label": "violation",
+   "note": "only recomputes matchedResults from query and files"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/palette/QuickOpen.svelte",
+   "code": "  $effect(() => {\n    void selectedIndex\n    void tick().then(() => scrollSelectedIntoView())\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/shared/LinkifiedText.svelte",
+   "code": "  $effect(() => {\n    if (cwd) void ensureLoaded(cwd)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 198,
+   "path": "src/renderer/src/components/preferences/_partials/SeparatorPopover.svelte",
+   "code": "  $effect(() => {\n    return () => {\n      triggerEl?.focus?.()\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 210,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  $effect(() => {\n    if (favModalOpen) {\n      tick().then(() => favNameInputEl?.focus())\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 210,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  $effect(() => {\n    if (savePrompt) {\n      tick().then(() => savePromptUsernameEl?.focus())\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemotePairingQr.svelte",
+   "code": "  $effect(() => {\n    if (!qrEl) return\n    const { textColor, accentColor } = getQrColors()\n    if (qrInstance) {\n      updateQr()\n      return\n    }\n\n    qrInstance = new QRCodeStyling({\n      width: 168,\n      height: 168,\n      type: 'svg',\n      data: url,\n      image: appIconUrl,\n      dotsOptions: { color: textColor, type: 'rounded' },\n      backgroundOptions: { color: 'transparent' },\n      cornersSquareOptions: { color: accentColor, type: 'extra-rounded' },\n      cornersDotOptions: { color: accentColor },\n      qrOptions: { errorCorrectionLevel: 'H' },\n      imageOptions: {\n        crossOrigin: 'anonymous',\n        imageSize: 0.18,\n        margin: 3,\n        hideBackgroundDots: true,\n      },\n    })\n    qrInstance.append(qrEl)\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemoteSection.svelte",
+   "code": "  $effect(() => {\n    if (status.kind === 'idle' || status.kind === 'listening' || status.kind === 'paired')\n      void loadInterfaces()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/github/CreateTaskPRModal.svelte",
+   "code": "  $effect(() => {\n    if (!loading && !loadError) {\n      containerEl?.querySelector<HTMLInputElement>('#create-pr-title')?.focus()\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/layout/RightPanel.svelte",
+   "code": "  $effect(() => {\n    if (!panelTask && workspaceState.rightPanelTab === 'task') {\n      workspaceState.rightPanelTab = 'session'\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  $effect(() => {\n    if (connectingId) dialogEl?.focus()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  $effect(() => {\n    if (!connected) {\n      projects = []\n      return\n    }\n    let cancelled = false\n    window.api\n      .trackerConfigFetchProjects(repoRoot ?? undefined)\n      .then((p) => {\n        if (!cancelled) projects = p\n      })\n      .catch(() => {\n        if (!cancelled) projects = []\n      })\n    return () => {\n      cancelled = true\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/TaskPRNamingPrefs.svelte",
+   "code": "  $effect(() => {\n    return () => flushSave()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/shared/UserSearchPicker.svelte",
+   "code": "  $effect(() => {\n    // Re-measure whenever the dropdown is open and anything that can move the input changes\n    // (picking/removing chips re-wraps the container).\n    void selected.length\n    void query\n    if (open && containerEl) {\n      const r = containerEl.getBoundingClientRect()\n      listTop = r.bottom + 4\n      listLeft = r.left\n      listWidth = r.width\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/sidebar/GitSection.svelte",
+   "code": "  $effect(() => {\n    void workspaceState.selectedWorktreePath\n    void workspaceState.isDirty\n    void refreshChangeCount()\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/sidebar/GitSection.svelte",
+   "code": "  $effect(() => {\n    const path = workspaceState.selectedWorktreePath ?? workspaceState.repoRoot\n    const branch = workspaceState.branch\n    // Re-check after any PR mutation elsewhere in the app (create/merge/close bump the tick).\n    void getPRRefreshTick()\n    fallbackPR = null\n    if (!path || !branch || branchPR) return\n    let cancelled = false\n    window.api\n      .taskTrackerPRDetails(path, branch)\n      .then((pr) => {\n        if (!cancelled && pr) {\n          fallbackPR = { number: pr.number, state: pr.state, isDraft: pr.isDraft }\n        }\n      })\n      .catch(() => {})\n    return () => {\n      cancelled = true\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  $effect(() => {\n    if (!showBranchName || !typeName) return\n    let cancelled = false\n    void window.api\n      .taskTrackerResolveBranchType(typeName, trackerId, undefined, repoRoot)\n      .then((info) => {\n        if (!cancelled && info?.defaultType) draftBranchType = info.defaultType\n      })\n      .catch(() => {})\n    return () => {\n      cancelled = true\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskListPicker.svelte",
+   "code": "  $effect(() => {\n    filteredCount = filteredTasks.length\n  })",
+   "label": "violation",
+   "note": "only copies filteredTasks.length"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  $effect(() => {\n    const key = panel?.taskKey ?? ''\n    if (key && (credentialsBroken || checkingCreds || panelResolving)) {\n      // Don't fire doomed (or premature) requests; clearing the guard makes the load re-run once\n      // credentials are fixed/verified or resolution lands (the flag flips and this effect\n      // fires again).\n      loadedForKey = ''\n      return\n    }\n    if (key && key !== loadedForKey) {\n      loadedForKey = key\n      // Different task \u2014 the data on screen belongs to the previous one, drop it immediately.\n      task = null\n      transitions = []\n      comments = []\n      attachments = []\n      attachmentPreviews = {}\n      void refresh(key)\n    } else if (!key) {\n      loadedForKey = ''\n      task = null\n      transitions = []\n      comments = []\n      attachments = []\n      attachmentPreviews = {}\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "code": "  $effect(() => {\n    if (!containerEl) return\n    if (selectedTask) {\n      savedInlineHeight = containerEl.style.height\n      containerEl.style.height = ''\n    } else if (savedInlineHeight) {\n      containerEl.style.height = savedInlineHeight\n      savedInlineHeight = ''\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "code": "  $effect(() => {\n    const list = taskExistingBranches\n    taskBranchPRs = {}\n    if (list.length === 0) return\n    let cancelled = false\n    for (const b of list.slice(0, 3)) {\n      void window.api\n        .taskTrackerPRDetails(trackerRepoRoot, b.name)\n        .then((pr) => {\n          if (!cancelled && pr) {\n            taskBranchPRs = {\n              ...taskBranchPRs,\n              [b.name]: { number: pr.number, state: pr.state, isDraft: pr.isDraft },\n            }\n          }\n        })\n        .catch(() => {})\n    }\n    return () => {\n      cancelled = true\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 342,
+   "path": "src/renderer/src/components/shared/Markdown.svelte",
+   "code": "  $effect(() => {\n    const gen = ++parseGen\n    const raw = source\n    if (!raw.trim()) {\n      html = ''\n      return\n    }\n    // Promise.resolve().then(...) so a SYNCHRONOUS parser throw lands in the catch\n    // instead of escaping the effect; the catch falls back to the sanitized raw\n    // source rather than leaving stale HTML from a previous source on screen.\n    Promise.resolve()\n      .then(() => md.parse(raw))\n      .then((parsed) => {\n        if (gen !== parseGen) return\n        html = purify.sanitize(parsed, SANITIZE_OPTS)\n      })\n      .catch(() => {\n        if (gen === parseGen) html = purify.sanitize(raw, SANITIZE_OPTS)\n      })\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiActivityModal.svelte",
+   "code": "  $effect(() => {\n    // A trigger elsewhere in the app bumps the tick \u2192 refresh right away.\n    void getCiActivityTick()\n    // Tracked so picking another branch re-queries instead of re-rendering rows that\n    // were fetched under the old filter, and restarts the poll on the new selection.\n    void branchFilter\n    let stop: () => void = () => undefined\n    untrack(() => {\n      stop = startSettledPoll(refresh, 10_000)\n    })\n    return () => {\n      seq += 1\n      stop()\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/PullRequestActions.svelte",
+   "code": "  $effect(() => {\n    const path = workspaceState.selectedWorktreePath ?? workspaceState.repoRoot\n    const branch = workspaceState.branch\n    void getPRFallbackGeneration(path, branch)\n    fallbackPR = null\n    lookup = settledPRLookup()\n    if (!path || !branch || branchPR) {\n      return\n    }\n\n    let cancelled = false\n    lookup = pendingPRLookup()\n    loadPRFallbackSummary(path, branch)\n      .then((pr) => {\n        if (!cancelled && pr) {\n          fallbackPR = { number: pr.number, state: pr.state, isDraft: pr.isDraft }\n        }\n        if (!cancelled) lookup = settledPRLookup()\n      })\n      .catch((error) => {\n        if (!cancelled) {\n          lookup = settledPRLookup(ipcErrorMessage(error, 'Failed to check pull requests'))\n        }\n      })\n\n    return () => {\n      cancelled = true\n    }\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  $effect(() => {\n    const root = repoRoot\n    // Credential writers bump this after saving or removing the exact CI binding.\n    void getCiCredentialTick()\n    // Untracked: the loader reads store state it also writes \u2014 tracking it here\n    // would loop the effect (see the refreshCi note in the ci store).\n    if (root) untrack(() => void loadCiRepoConfig(root))\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  $effect(() => {\n    void repoRoot\n    activity = null\n    activityLoaded = false\n    activityError = ''\n    identicalPartialCount = 0\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  $effect(() => {\n    const root = repoRoot\n    const failure = activityError || branchError\n    if (root && failure) untrack(() => void loadCiRepoConfig(root))\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/worktree/BranchPicker.svelte",
+   "code": "  $effect(() => {\n    // Parents can reset the bound selection without remounting this component (for example when\n    // CiRunDialog switches jobs). Never leave an empty/edited picker collapsed after that reset.\n    const reopen = shouldReopenBranchList(collapseConfirmedSelection, selectedBranch, query)\n    if (!reopenArmed) {\n      // Skip the mount run only. `startCollapsed` is about how the picker APPEARS when\n      // its dialog opens; letting this effect fire immediately would reopen it on the\n      // same frame, since \"nothing selected yet\" is exactly the reopen condition.\n      reopenArmed = true\n      if (startCollapsed) return\n    }\n    if (reopen) listOpen = true\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  $effect(() => {\n    if (config.provider !== 'github-actions') return\n    const selection = selectedRefName ? `${jobId}\\^@${selectedRefName}` : ''\n    if (selection === loadedGitHubParametersFor) return\n    loadedGitHubParametersFor = selection\n    untrack(() => {\n      parametersSequence += 1\n      parameters = null\n      schemaRevision = ''\n      values = {}\n      parametersError = ''\n      parametersLoading = false\n      if (selection) void loadParameters()\n    })\n  })",
+   "label": "clean",
+   "note": "has side effects (DOM, API, events, stores, async) or one-time initialization"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/components/preferences/AgentProfilesPanel.svelte",
+   "code": "  let agentProfiles = $derived(getProfilesByAgent(agentType))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/components/preferences/AgentProfilesPanel.svelte",
+   "code": "  let agentProfiles = $state(null)\n  $effect(() => {\n    agentProfiles = getProfilesByAgent(agentType)\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiCredentialModal.svelte",
+   "code": "  let canSave = $derived(token.trim().length > 0 && !submitting)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiCredentialModal.svelte",
+   "code": "  let canSave = $state(null)\n  $effect(() => {\n    canSave = token.trim().length > 0 && !submitting\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/preferences/TerminalPrefs.svelte",
+   "code": "  let closePolicy = $derived(prefs['tmux.closePolicy'] ?? 'detach')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/preferences/TerminalPrefs.svelte",
+   "code": "  let closePolicy = $state(null)\n  $effect(() => {\n    closePolicy = prefs['tmux.closePolicy'] ?? 'detach'\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  let creds = $derived(getTrackerCredentials())",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  let creds = $state(null)\n  $effect(() => {\n    creds = getTrackerCredentials()\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 51,
+   "path": "src/renderer/src/components/layout/StatusBar.svelte",
+   "code": "  let allAgentEntries = $derived(Object.entries(agentSessions))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 51,
+   "path": "src/renderer/src/components/layout/StatusBar.svelte",
+   "code": "  let allAgentEntries = $state(null)\n  $effect(() => {\n    allAgentEntries = Object.entries(agentSessions)\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/preferences/GeneralPrefs.svelte",
+   "code": "  let notchEnabled = $derived(prefs['notch.enabled'] === 'true')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/preferences/GeneralPrefs.svelte",
+   "code": "  let notchEnabled = $state(null)\n  $effect(() => {\n    notchEnabled = prefs['notch.enabled'] === 'true'\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  const selectableRefs = $derived(refs.filter((ref) => !ambiguousRefNames.includes(ref.name)))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  let selectableRefs = $state(null)\n  $effect(() => {\n    selectableRefs = refs.filter((ref) => !ambiguousRefNames.includes(ref.name))\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 122,
+   "path": "src/renderer/src/components/preferences/UpdatePrefs.svelte",
+   "code": "  let checkFrequency = $derived(prefs['update.checkFrequency'] || 'daily')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 122,
+   "path": "src/renderer/src/components/preferences/UpdatePrefs.svelte",
+   "code": "  let checkFrequency = $state(null)\n  $effect(() => {\n    checkFrequency = prefs['update.checkFrequency'] || 'daily'\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  const jobRows = $derived(jobsState.rows)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  let jobRows = $state(null)\n  $effect(() => {\n    jobRows = jobsState.rows\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  const ciPlaceholderRows = $derived(Math.max(1, Math.round(ciFrozenHeight / 28)))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  let ciPlaceholderRows = $state(null)\n  $effect(() => {\n    ciPlaceholderRows = Math.max(1, Math.round(ciFrozenHeight / 28))\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/notch/NotchOverlay.svelte",
+   "code": "  const itemCount = $derived(Math.min(visibleSessions.length, 5))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/notch/NotchOverlay.svelte",
+   "code": "  let itemCount = $state(null)\n  $effect(() => {\n    itemCount = Math.min(visibleSessions.length, 5)\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  let prBaseBody = $derived(resolved?.config.prTemplate?.bodyTemplate || DEFAULT_PR_BODY)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  let prBaseBody = $state(null)\n  $effect(() => {\n    prBaseBody = resolved?.config.prTemplate?.bodyTemplate || DEFAULT_PR_BODY\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  const provider = $derived(config?.provider ?? 'teamcity')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  let provider = $state(null)\n  $effect(() => {\n    provider = config?.provider ?? 'teamcity'\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  const branchRows = $derived(branchState.response?.configured ? branchState.response.rows : [])",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  let branchRows = $state(null)\n  $effect(() => {\n    branchRows = branchState.response?.configured ? branchState.response.rows : []\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  let showsTaskList = $derived(mode === 'browse' || (linkTab === 'existing' && !selectedLinkTask))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  let showsTaskList = $state(null)\n  $effect(() => {\n    showsTaskList = mode === 'browse' || (linkTab === 'existing' && !selectedLinkTask)\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  let panelResolving = $derived(getPanelTaskResolvedPath() !== worktreePath.replace(/\\\\/g, '/'))",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  let panelResolving = $state(null)\n  $effect(() => {\n    panelResolving = getPanelTaskResolvedPath() !== worktreePath.replace(/\\\\/g, '/')\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 332,
+   "path": "src/renderer/src/components/preferences/ToolPrefs.svelte",
+   "code": "  let view = $derived(getToolView())",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 332,
+   "path": "src/renderer/src/components/preferences/ToolPrefs.svelte",
+   "code": "  let view = $state(null)\n  $effect(() => {\n    view = getToolView()\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/TaskBranchNamingPrefs.svelte",
+   "code": "  let typeMapping = $derived(config?.branchTemplate?.typeMapping ?? {})",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/TaskBranchNamingPrefs.svelte",
+   "code": "  let typeMapping = $state(null)\n  $effect(() => {\n    typeMapping = config?.branchTemplate?.typeMapping ?? {}\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/GitHubActionsActivityRow.svelte",
+   "code": "  let stamp = $derived(run.startedAt ?? run.queuedAt ?? run.finishedAt)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/GitHubActionsActivityRow.svelte",
+   "code": "  let stamp = $state(null)\n  $effect(() => {\n    stamp = run.startedAt ?? run.queuedAt ?? run.finishedAt\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 138,
+   "path": "src/renderer/src/components/agents/CodexExtras.svelte",
+   "code": "  let turnCount = $derived((extra.turnCount as number | undefined) ?? null)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 138,
+   "path": "src/renderer/src/components/agents/CodexExtras.svelte",
+   "code": "  let turnCount = $state(null)\n  $effect(() => {\n    turnCount = (extra.turnCount as number | undefined) ?? null\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiLastJobCard.svelte",
+   "code": "  let row = $derived(index === -1 ? undefined : statusRows[index])",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiLastJobCard.svelte",
+   "code": "  let row = $state(null)\n  $effect(() => {\n    row = index === -1 ? undefined : statusRows[index]\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/BranchTokenBuilder.svelte",
+   "code": "  let texts = $derived(parsed.texts)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/BranchTokenBuilder.svelte",
+   "code": "  let texts = $state(null)\n  $effect(() => {\n    texts = parsed.texts\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/notch/NotchOverlay.svelte",
+   "code": "  const isPeeking = $derived(peekSessionIds.size > 0)",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 13,
+   "path": "src/renderer/src/components/notch/NotchOverlay.svelte",
+   "code": "  let isPeeking = $state(null)\n  $effect(() => {\n    isPeeking = peekSessionIds.size > 0\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 33,
+   "path": "src/renderer/src/components/preferences/GeminiPrefs.svelte",
+   "code": "  let approvalMode = $derived(prefs['gemini.approvalMode'] || '')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 33,
+   "path": "src/renderer/src/components/preferences/GeminiPrefs.svelte",
+   "code": "  let approvalMode = $state(null)\n  $effect(() => {\n    approvalMode = prefs['gemini.approvalMode'] || ''\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/notes/NotesPane.svelte",
+   "code": "  const content = $derived(key ? (notesState[key] ?? '') : '')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/notes/NotesPane.svelte",
+   "code": "  let content = $state(null)\n  $effect(() => {\n    content = key ? (notesState[key] ?? '') : ''\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  },
+  {
+   "pr": 33,
+   "path": "src/renderer/src/components/preferences/GeminiPrefs.svelte",
+   "code": "  let apiKey = $derived(prefs['gemini.apiKey'] || '')",
+   "label": "clean",
+   "note": "$derived, not an effect"
+  },
+  {
+   "pr": 33,
+   "path": "src/renderer/src/components/preferences/GeminiPrefs.svelte",
+   "code": "  let apiKey = $state(null)\n  $effect(() => {\n    apiKey = prefs['gemini.apiKey'] || ''\n  })",
+   "label": "violation",
+   "note": "value computed in $effect instead of $derived",
+   "synthetic": "$derived rewritten as $state + $effect"
+  }
+ ]
+}

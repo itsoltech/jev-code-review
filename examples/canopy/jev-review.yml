@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=../../schema/jev-review.schema.json
+# Example: itsoltech/canopy-desktop (Electron + Svelte 5, neverthrow, ts-pattern).
+# Rules come from built-in presets; this file only sets the project's conventions as vars,
+# taken from its CLAUDE.md, CONTRIBUTING.md, .github/prompts/*.md and PR template.
+extends:
+  - jev:security
+  - jev:conventional-title
+  - jev:pr-template
+  - jev:docs-sync
+  - jev:result-errors
+  - jev:electron
+  - jev:svelte5
+  - jev:theming
+  - jev:pattern-matching
+  - jev:type-hygiene
+  - jev:async-state
+model: jev-1.13.0
+
+vars:
+  # Titles and templates (pr-validation.md, pull_request_template.md)
+  title_prefixes: [feat, fix, chore, refactor, docs, test, build]
+  max_title_length: "72"
+  infra_paths: [".github/**", ".claude/**", ".agents/**", ".opencode/**", "perf/**", "scripts/**", "package.json", "package-lock.json", "*.config.*"]
+  what_heading: what
+  why_heading: why
+
+  # Process layout (CLAUDE.md, Architecture)
+  main_paths: ["src/main/**"]
+  renderer_paths: ["src/renderer/**"]
+  preload_paths: ["src/preload/**"]
+  menu_paths: ["src/main/menu/**"]
+  # Rendered only on Windows and Linux (Titlebar.svelte: {#if !isMac}); code-review.md allows
+  # platform labels in platform-exclusive features.
+  # Path validators the main process uses on renderer input (src/main/ipc).
+  input_validators: [validatePathAccess(), validateCreationPath(), validateWorktreeScopedPathAccess(), validateFilePath(), an allowlist check]
+  platform_specific_paths: ["src/renderer/src/components/TitlebarMenu.svelte"]
+  svelte_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.svelte.ts"]
+  svelte_component_paths: ["src/renderer/**/*.svelte"]
+  max_component_lines: "300"
+  # Stores in src/renderer/src/lib/stores expose reactive get*() readers without side effects.
+  pure_reads: Calls to get...() functions such as getToolView() or getTrackerCredentials() only read reactive store state and have no side effects.
+  # code-review.md, Performance: synchronous fs blocks the main process.
+  sync_fs_paths: ["src/main/**"]
+  typed_paths: ["src/**/*.ts", "src/**/*.svelte"]
+  ui_state_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.svelte.ts", "src/renderer/**/*.ts"]
+
+  # Error handling (CLAUDE.md, Error handling): the allowed list is copied, nothing added.
+  result_paths: ["src/main/**/*.ts"]
+  test_paths: ["src/main/**/*.test.ts"]
+  result_scope: main-process
+  result_type: a neverthrow Result or ResultAsync
+  error_constructor: err(...)
+  external_call_wrapper: fromExternalCall()
+  allowed_try_catch:
+    - killing or cleaning up a PTY or child process
+    - parsing an HTTP request body
+    - JSON.parse of untrusted text
+    - contextBridge initialization
+    - deleting files the code created (rm, unlink) as cleanup
+  try_catch_violation_examples:
+    - fetch()
+    - readFile()
+    - stat()
+    - realpath()
+    - access()
+    - a git or gh command
+    - decryptString()
+    - new URL()
+    - YAML parsing
+    - closing a view or server
+  try_catch_note: Crash reporter code and IPC handlers are not exceptions.
+
+  # Theming (code-review.md, Theming): notch overlay files are the documented exception.
+  style_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.css", "src/renderer-shared/**/*.svelte"]
+  color_exempt_paths: ["**/NotchOverlay.svelte", "**/NotchNotificationRow.svelte", "src/renderer-shared/styles/tokens.css"]
+  theme_token_example: var(--color-accent)
+
+  matcher_paths: ["src/**/*.ts", "src/**/*.svelte"]
+  matcher_library: ts-pattern
+  source_paths: ["src/**"]
+  docs_paths: ["docs/**"]
+
+files:
+  exclude: ["**/package-lock.json", "out/**", "dist/**", "THIRD-PARTY-NOTICES", "CHANGELOG.md", "**/*.snap"]
+
+context:
+  include_pr_body: true
+  max_hunk_lines: 80
+
+skip:
+  authors: ["dependabot[bot]", "app/dependabot"]
+
+rules:
+  # Canopy is an app for AI agents, so docs and code mention AI tools all the time.
+  # Only report the injection guard when Jev is fairly sure.
+  - id: meta.injection
+    threshold: 0.6
+    needs_human_band: [0.6, 0.6]
+
+dimensions:
+  - id: change_focus
+    scope: pr
+    weight: 1
+    instructions: Using `pr` and `files`, how focused is this pull request on a single purpose?
+    criteria:
+      - Unrelated changes across many areas.
+      - Mostly one purpose with several unrelated changes.
+      - One purpose with a small unrelated change.
+      - One clear purpose.
+
+policy:
+  # code-review.md: any actionable issue means changes requested, whatever its severity.
+  request_changes: { severities: [blocker, major, minor] }
+  fail_check: { severities: [blocker, major, minor] }
+  on_error: neutral
+
+output:
+  review_events: comment_only
+  max_inline_comments: 20

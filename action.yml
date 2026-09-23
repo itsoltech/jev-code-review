@@ -1,0 +1,67 @@
+name: Jev code review
+description: Configurable pull request review with TypeSafe Jev. Rules, thresholds and verdict policy live in a YAML file.
+author: jev-code-review
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  typesafe-api-key:
+    description: TypeSafe API key. Store it as a repository or organization secret.
+    required: true
+  github-token:
+    description: Token used to read the PR and post the review.
+    required: false
+    default: ${{ github.token }}
+  config-path:
+    description: Path of the review config in the repository.
+    required: false
+    default: .github/jev-review.yml
+  config-ref:
+    description: Read the config from the PR "base" commit (default, a PR cannot change its own review rules) or from "head".
+    required: false
+    default: base
+  model:
+    description: Overrides `model` from the config, for example jev-1.13.0.
+    required: false
+  dry-run:
+    description: Evaluate and write the job summary without posting anything to the PR.
+    required: false
+    default: "false"
+  allow-fork-prs:
+    description: Review pull requests from forks. Read the security notes in the README before enabling.
+    required: false
+    default: "false"
+  fail-on-error:
+    description: Fail the check when Jev requests fail. Overrides `policy.on_error` when set.
+    required: false
+  job-summary:
+    description: Write the review summary to the job summary page.
+    required: false
+    default: "true"
+
+outputs:
+  status:
+    description: reviewed, skipped or config_error.
+  verdict:
+    description: APPROVE, COMMENT or REQUEST_CHANGES.
+  check-failed:
+    description: '"true" when the policy failed the check.'
+  composite-score:
+    description: Weighted quality score from 0 to 1, empty when no dimensions are configured.
+  findings-count:
+    description: Number of findings, confirmed and uncertain.
+  blockers-count:
+    description: Number of confirmed blocker findings.
+  needs-human:
+    description: '"true" when some findings are uncertain or the injection guard fired.'
+  model:
+    description: Versioned model IDs that answered.
+  input-tokens:
+    description: Input tokens billed by TypeSafe for this run.
+  summary-comment-id:
+    description: ID of the sticky summary comment.
+
+runs:
+  using: node24
+  main: dist/index.js

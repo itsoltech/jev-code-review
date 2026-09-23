@@ -1,0 +1,167 @@
+{
+  "_doc": "Labels corrected after reading the row. Each entry says why the automatic label was wrong.",
+  "pr60-why-is-what": {
+    "template.why-reason": {
+      "violates": false,
+      "reason": "The What text used as Why states a reason: fixes SessionStart hook errors caused by .cmd scripts."
+    }
+  },
+  "pr288-why-is-what": {
+    "template.why-reason": {
+      "violates": false,
+      "reason": "The What text used as Why states a reason: surfaces ABI breaks before merge."
+    }
+  },
+  "pr57-feat-internal-why": {
+    "template.user-impact": {
+      "violates": false,
+      "reason": "The substituted Why names user-visible effects: layout shifts and cosmetic glitches, app feels coherent."
+    }
+  },
+  "pr178-feat-internal-why": {
+    "template.user-impact": {
+      "violates": false,
+      "reason": "The substituted Why names user benefit: settings easier to find."
+    }
+  },
+  "pr94-rejected-1": {
+    "title.length": {
+      "violates": false,
+      "reason": "Title is 69 characters; the bot miscounted."
+    }
+  },
+  "pr118-rejected-2": {
+    "title.length": {
+      "violates": false,
+      "reason": "Title is 71 characters; the bot miscounted."
+    }
+  },
+  "pr190-rejected-1": {
+    "title.length": {
+      "violates": false,
+      "reason": "Title is 70 characters; the bot miscounted."
+    }
+  },
+  "pr233-rejected-1": {
+    "title.length": {
+      "violates": false,
+      "reason": "Title is 70 characters; the bot miscounted."
+    }
+  },
+  "pr337-rejected-1": {
+    "title.length": {
+      "violates": false,
+      "reason": "Title was 71 characters; the bot reported 73."
+    }
+  },
+  "pr55-final": {
+    "title.length": {
+      "violates": true,
+      "reason": "Title is 94 characters; merged with a bypassed or lenient validation."
+    },
+    "template.what-section": {
+      "violates": true,
+      "reason": "Uses Summary/Changes headings, no What section."
+    },
+    "template.why-section": {
+      "violates": true,
+      "reason": "No Why section."
+    },
+    "template.checklist": {
+      "violates": true,
+      "reason": "No checklist."
+    }
+  },
+  "pr80-final": {
+    "template.what-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    },
+    "template.why-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    }
+  },
+  "pr107-final": {
+    "template.what-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    },
+    "template.why-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    }
+  },
+  "pr160-final": {
+    "template.what-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    },
+    "template.why-section": {
+      "violates": true,
+      "reason": "No headings at all."
+    }
+  },
+  "pr231-final": {
+    "template.what-section": {
+      "violates": true,
+      "reason": "Summary/Test plan headings, no What."
+    },
+    "template.why-section": {
+      "violates": true,
+      "reason": "No Why section."
+    }
+  },
+  "pr105-final": {
+    "template.checklist": {
+      "violates": true,
+      "reason": "Template checklist removed."
+    }
+  },
+  "pr208-rejected-1": {
+    "template.checklist": {
+      "violates": true,
+      "reason": "No checklist; the bot did not report it in this run."
+    }
+  },
+  "pr123-final": {
+    "title.prefix": {
+      "violates": true,
+      "reason": "ci: is not in the allowed prefix list; the bot rejected perf: but passed ci:."
+    }
+  },
+  "pr127-final": {
+    "title.prefix": {
+      "violates": true,
+      "reason": "ci: is not in the allowed prefix list."
+    }
+  },
+  "pr183-final": {
+    "title.lowercase": {
+      "violates": true,
+      "reason": "Text after the prefix starts with uppercase CodeMirror."
+    }
+  },
+  "pr344-rejected-1": {
+    "title.lowercase": {
+      "violates": true,
+      "reason": "Starts with uppercase TeamCity; the bot flagged it only in the next run."
+    },
+    "template.what-section": {
+      "violates": true,
+      "reason": "Body starts with Why and has no What section; the bot reported it only in the next run."
+    }
+  },
+  "pr92-final": {
+    "template.user-impact": {
+      "violates": true,
+      "reason": "Team policy: CI, test and tooling changes use chore. The Why describes benefits to the team's performance tooling, not app users."
+    }
+  },
+  "pr121-final": {
+    "template.user-impact": {
+      "violates": true,
+      "reason": "Team policy: CI-only change (.github only) should be chore(ci), not feat(ci)."
+    }
+  }
+}

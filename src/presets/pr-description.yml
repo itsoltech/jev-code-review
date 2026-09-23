@@ -1,0 +1,98 @@
+# Checks on the pull request title and description. Findings appear in the summary comment.
+# Exact formats (ticket id pattern, Conventional Commits prefix) are better checked with a regex in CI;
+# these rules cover what needs reading: is the title specific, does the description explain why.
+context:
+  include_pr_body: true
+
+rules:
+  - id: pr.title-specific
+    description: Title does not say what the change does
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    fires_on: "no"
+    instructions: >-
+      Ignoring markers such as WIP, Draft or DO NOT MERGE, does `pr.title` say what the change
+      does and which part of the system it affects, specifically enough that a teammate could
+      tell what changed without opening the pull request?
+    criteria:
+      true: 'Specific titles such as "Add CSV export to the invoices list", "WIP: payment retries with backoff" or "Fix token refresh race in the auth client".'
+      false: Generic or empty titles such as "Fix bug", "Updates", "Changes", "Small fixes", a bare ticket number or a branch name like "feature/user-search".
+
+  - id: pr.title-unfinished
+    description: Title marks the change as unfinished
+    type: noul
+    scope: pr
+    severity: major
+    locate: false
+    instructions: >-
+      Does `pr.title` mark the change as unfinished or not ready to merge, for example with WIP,
+      DO NOT MERGE, DNM, draft, temp or "not ready"?
+
+  - id: pr.description-what
+    description: Description does not summarize the change
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    fires_on: "no"
+    instructions: >-
+      Does `pr.description` describe what this change does, with concrete information that is
+      not already in `pr.title`?
+    criteria:
+      true: The description names what is added, changed or removed, for example which component, behavior or files change and how.
+      false: The description is empty, repeats the title, says only something vague like "Makes things faster" or "Fixes after review", only links a ticket, or contains only an unfilled template.
+
+  - id: pr.description-why
+    description: Description does not explain why the change is needed
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    fires_on: "no"
+    instructions: >-
+      Does `pr.description` explain why the change is needed, such as the problem, bug, user
+      need or requirement it addresses?
+    criteria:
+      true: The description names the motivation, for example "Users could not export more than 100 rows" or "Fixes a crash when the token expires during upload".
+      false: The description only says what changed, only links a ticket, or is empty.
+
+  - id: pr.description-testing
+    description: Description does not say how the change was tested
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    fires_on: "no"
+    instructions: >-
+      Does `pr.description` say how the change was tested or how a reviewer can verify it,
+      for example tests added or run, manual test steps or screenshots?
+    criteria:
+      true: The description names what was tested or how, such as tests added or run, manual verification steps, a test plan, CI results or screenshots.
+      false: The description does not mention testing, the testing section is empty, or it only claims "tested" or "fully tested" without saying what was tested or how.
+
+  - id: pr.issue-reference
+    description: No issue or ticket reference
+    type: noul
+    scope: pr
+    severity: info
+    locate: false
+    fires_on: "no"
+    instructions: >-
+      Does `pr.title` or `pr.description` reference an issue or ticket, such as #123,
+      ABC-123 or a link to an issue tracker?
+
+  - id: pr.template-unfilled
+    description: Description template left unfilled
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    instructions: >-
+      Does `pr.description` contain template sections that were left unfilled, such as a heading
+      with nothing under it, placeholder text like "Describe your changes here" or "<!-- ... -->"
+      instructions that were not replaced?
+    criteria:
+      true: At least one template section or placeholder was left as it was.
+      false: Every section has real content, or the description has no template.

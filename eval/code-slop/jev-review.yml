@@ -1,0 +1,3 @@
+# Config for calibrating the jev:code-slop preset on the rule pack fixtures.
+extends: ["jev:code-slop"]
+model: jev-1.13.0

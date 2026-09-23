@@ -1,0 +1,42 @@
+# Typed error handling: failures are returned as values, try/catch only at listed boundaries.
+vars:
+  result_paths: ["src/**"]
+  test_paths: ["**/*.test.*", "**/*.spec.*", "**/test/**", "**/tests/**", "**/e2e/**"]
+  result_scope: application
+  result_type: a Result value
+  error_constructor: an error Result
+  external_call_wrapper: a Result-returning wrapper
+  allowed_try_catch:
+    - JSON.parse of untrusted text
+    - cleanup of resources whose failure does not matter
+  try_catch_violation_examples: ["fetch()", "readFile()", "a git or shell command"]
+
+rules:
+  - id: errors.try-catch-outside-boundaries
+    description: 'try/catch outside the allowed boundaries; return {{vars.result_type}} (use {{vars.external_call_wrapper}})'
+    type: noul
+    severity: major
+    paths: ["{{vars.result_paths}}"]
+    exclude_paths: ["{{vars.test_paths}}"]
+    instructions: >-
+      Do the added lines (marked "+") in `changes.lines` add a try/catch block (a try with a
+      catch clause) that is not one of these allowed cases: {{vars.allowed_try_catch|semi}}?
+    criteria:
+      true: >-
+        Any other try/catch in {{vars.result_scope}} code, for example around
+        {{vars.try_catch_violation_examples}}, or a catch that converts the error to
+        {{vars.error_constructor}} instead of using {{vars.external_call_wrapper}}.
+        A try that also covers a file read, network call or command is a violation even when
+        it contains an allowed operation such as JSON.parse. {{vars.try_catch_note?}}
+      false: >-
+        No try/catch is added, only try/finally without a catch is added, or every added
+        catch is one of the allowed cases: {{vars.allowed_try_catch|semi}}.
+  - id: errors.throw-new-error
+    description: 'throw new Error(string) instead of {{vars.result_type}} with a typed error'
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: major
+    paths: ["{{vars.result_paths}}"]
+    exclude_paths: ["{{vars.test_paths}}"]
+    regex: '\bthrow new Error\('

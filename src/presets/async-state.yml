@@ -1,0 +1,33 @@
+# Async UI code must not apply results that belong to an outdated request.
+vars:
+  ui_state_paths: ["**/*.svelte", "**/*.svelte.ts", "**/*.tsx", "**/*.jsx", "**/*.vue"]
+  staleness_guards:
+    - a request counter or generation number compared after the await
+    - a cancelled flag set by cleanup
+    - an AbortSignal
+    - comparing the captured input with the current value
+  # Optional: which inputs change while requests run in this project.
+  # changing_inputs: "The selected project and repoRoot change when the user switches projects."
+
+rules:
+  - id: async.stale-write
+    description: Result written after await without checking the request is still current
+    type: noul
+    severity: major
+    paths: ["{{vars.ui_state_paths}}"]
+    instructions: >-
+      Does an added async function or promise callback in `changes.lines` start a request
+      from an input that can change while it waits (a selected path, id, key, query, form
+      field or prop), and after the await write the result into component or store state
+      without first checking that the result is still current, for example with
+      {{vars.staleness_guards}}?
+    criteria:
+      true: >-
+        For example `const diff = await api.gitDiff(worktreePath); files = diff.files` where
+        worktreePath can change, or `preview = await render(templateInput)` while the user keeps
+        typing, with no check after the await. {{vars.changing_inputs?}}
+      false: >-
+        No such write, or the write is guarded; results are stored keyed by their input
+        (cache[path] = result); the inputs cannot change during the call (fixed props of a
+        dialog, a one-time init); the function is a single user action (save, delete, test a
+        connection); or only busy flags, toasts or error messages change after the await.

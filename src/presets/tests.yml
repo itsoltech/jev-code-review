@@ -1,0 +1,13 @@
+rules:
+  - id: tests.missing
+    description: Behavior changed without test changes
+    type: noul
+    scope: pr
+    severity: minor
+    locate: false
+    instructions: >-
+      Using `pr` and `files`, does this pull request change application behavior (source code
+      that is not tests, documentation or configuration) while `stats.test_files_changed` is 0?
+    criteria:
+      true: Source files with behavior changes are modified and no test files are changed.
+      false: Tests are changed, or the pull request only touches docs, config, formatting, dependencies or tests.

@@ -1,0 +1,46 @@
+# Conventional Commits style PR titles. All checks run in code.
+vars:
+  title_prefixes: [feat, fix, chore, refactor, docs, test, build]
+  max_title_length: "72"
+  # Changes that touch only these paths are infrastructure and must not use user-facing prefixes.
+  infra_paths: [".github/**", "scripts/**", "*.config.*", "package.json", "package-lock.json"]
+  user_facing_prefixes: [feat, fix]
+  infra_prefix: chore
+
+rules:
+  - id: title.prefix
+    description: 'Title must start with one of: {{vars.title_prefixes}}, with an optional (scope)'
+    type: pattern
+    field: title
+    regex: '^({{vars.title_prefixes|regex}})(\([^)]+\))?: '
+    severity: major
+  - id: title.length
+    description: Title must be under {{vars.max_title_length}} characters
+    type: pattern
+    field: title
+    regex: '^.{{{vars.max_title_length}},}$'
+    fires_when: match
+    severity: major
+  - id: title.lowercase
+    description: Title text after the prefix must start lowercase
+    type: pattern
+    field: title
+    regex: '^[a-z]+(\([^)]*\))?: [A-Z]'
+    fires_when: match
+    severity: minor
+  - id: title.period
+    description: Title must not end with a period
+    type: pattern
+    field: title
+    regex: '\.$'
+    fires_when: match
+    severity: minor
+  - id: title.infra-not-user-facing
+    description: 'Change touches only CI, tooling or dependency files but is titled {{vars.user_facing_prefixes}}; use {{vars.infra_prefix}}'
+    type: pattern
+    field: title
+    regex: '^({{vars.user_facing_prefixes|regex}})(\([^)]+\))?: '
+    fires_when: match
+    severity: major
+    when:
+      files_only: ["{{vars.infra_paths}}"]

@@ -1,0 +1,365 @@
+{
+ "rule": "electron.ipc-unvalidated-input",
+ "guide": "code-review.md, Security: missing input validation in ipcMain.handle handlers (the renderer is untrusted). Violation: a value from the handler's arguments or payload reaches a file system call, a URL opener or network request, a shell/git/gh command, a database query or a size-dependent allocation without a type, format, allowlist or size check, or without the project's path validators. Clean: every such value is validated first, or no renderer value reaches such a call.",
+ "labeled_by": "Claude, 2026-09-23, from reading each handler",
+ "items": [
+  {
+   "pr": 1,
+   "path": "src/main/index.ts",
+   "code": "  ipcMain.handle('app:openExternal', (_event, { url }: { url: string }) => {\n    return shell.openExternal(url)\n  })",
+   "label": "violation",
+   "note": "url from the renderer passed to shell.openExternal unchecked"
+  },
+  {
+   "pr": 18,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:readDir', async (event, payload: { dirPath: string }) => {\n    await validatePathAccess(event.sender.id, payload.dirPath)\n    const entries = await fs.promises.readdir(payload.dirPath, { withFileTypes: true })\n    const filtered = entries.filter((e) => {\n      if (IGNORED_NAMES.has(e.name)) return false\n      if (e.name.startsWith('.') && e.name !== '.env.example') return false\n      return true\n    })\n    const results = await Promise.all(\n      filtered.map(async (entry) => {\n        const isDir = entry.isDirectory()\n        let size = 0\n        if (!isDir) {\n          try {\n            const s = await fs.promises.stat(path.join(payload.dirPath, entry.name))\n            size = s.size\n          } catch {\n            return null\n          }\n        }\n        return { name: entry.name, isDirectory: isDir, size }\n      }),\n    )\n    return results\n      .filter((r): r is { name: string; isDirectory: boolean; size: number } => r !== null)\n      .sort((a, b) => {\n        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1\n        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })\n      })\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 18,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:readDir', async (event, payload: { dirPath: string }) => {\n    const entries = await fs.promises.readdir(payload.dirPath, { withFileTypes: true })\n    const filtered = entries.filter((e) => {\n      if (IGNORED_NAMES.has(e.name)) return false\n      if (e.name.startsWith('.') && e.name !== '.env.example') return false\n      return true\n    })\n    const results = await Promise.all(\n      filtered.map(async (entry) => {\n        const isDir = entry.isDirectory()\n        let size = 0\n        if (!isDir) {\n          try {\n            const s = await fs.promises.stat(path.join(payload.dirPath, entry.name))\n            size = s.size\n          } catch {\n            return null\n          }\n        }\n        return { name: entry.name, isDirectory: isDir, size }\n      }),\n    )\n    return results\n      .filter((r): r is { name: string; isDirectory: boolean; size: number } => r !== null)\n      .sort((a, b) => {\n        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1\n        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })\n      })\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 18,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:readFile', async (event, payload: { filePath: string; maxBytes?: number }) => {\n    await validatePathAccess(event.sender.id, payload.filePath)\n    const maxBytes = Math.min(payload.maxBytes ?? 1_048_576, 10_485_760)\n    const stat = await fs.promises.stat(payload.filePath)\n    const size = stat.size\n\n    const fd = await fs.promises.open(payload.filePath, 'r')\n    try {\n      const readSize = Math.min(size, maxBytes)\n      const buf = Buffer.alloc(readSize)\n      await fd.read(buf, 0, readSize, 0)\n\n      // Binary detection: check first 8KB for null bytes\n      const detectEnd = Math.min(readSize, 8192)\n      for (let i = 0; i < detectEnd; i++) {\n        if (buf[i] === 0) return { binary: true, size }\n      }\n\n      return {\n        content: buf.toString('utf-8'),\n        truncated: size > maxBytes,\n        size,\n        binary: false,\n      }\n    } finally {\n      await fd.close()\n    }\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 18,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:readFile', async (event, payload: { filePath: string; maxBytes?: number }) => {\n    const maxBytes = Math.min(payload.maxBytes ?? 1_048_576, 10_485_760)\n    const stat = await fs.promises.stat(payload.filePath)\n    const size = stat.size\n\n    const fd = await fs.promises.open(payload.filePath, 'r')\n    try {\n      const readSize = Math.min(size, maxBytes)\n      const buf = Buffer.alloc(readSize)\n      await fd.read(buf, 0, readSize, 0)\n\n      // Binary detection: check first 8KB for null bytes\n      const detectEnd = Math.min(readSize, 8192)\n      for (let i = 0; i < detectEnd; i++) {\n        if (buf[i] === 0) return { binary: true, size }\n      }\n\n      return {\n        content: buf.toString('utf-8'),\n        truncated: size > maxBytes,\n        size,\n        binary: false,\n      }\n    } finally {\n      await fd.close()\n    }\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 66,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:checkout', async (_event, payload: { repoRoot: string; branch: string }) => {\n    return GitRepository.checkout(payload.repoRoot, payload.branch)\n  })",
+   "label": "violation",
+   "note": "repoRoot and branch passed to git checkout unchecked"
+  },
+  {
+   "pr": 89,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('env:checkDependencies', async (_event, payload: { tools: string[] }) => {\n    const KNOWN_TOOLS = new Set(['claude', 'codex', 'gemini'])\n    const requested = (payload.tools ?? []).filter((t) => KNOWN_TOOLS.has(t))\n\n    const cmd = os.platform() === 'win32' ? 'where' : 'which'\n    const env = getLoginEnv() ?? (process.env as Record<string, string>)\n\n    const check = (binary: string): Promise<{ found: boolean; path?: string }> =>\n      new Promise((resolve) => {\n        execFile(cmd, [binary], { env }, (err, stdout) => {\n          resolve(err ? { found: false } : { found: true, path: stdout.trim().split('\\n')[0] })\n        })\n      })\n\n    const binaries = [...new Set([...requested, 'git'])]\n    const statuses = await Promise.all(binaries.map((b) => check(b)))\n    const results: Record<string, { found: boolean; path?: string }> = {}\n    binaries.forEach((b, i) => {\n      results[b] = statuses[i]\n    })\n\n    return { results, platform: process.platform }\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 89,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('env:checkDependencies', async (_event, payload: { tools: string[] }) => {\n    const KNOWN_TOOLS = new Set(['claude', 'codex', 'gemini'])\n    const requested = payload.tools ?? []\n\n    const cmd = os.platform() === 'win32' ? 'where' : 'which'\n    const env = getLoginEnv() ?? (process.env as Record<string, string>)\n\n    const check = (binary: string): Promise<{ found: boolean; path?: string }> =>\n      new Promise((resolve) => {\n        execFile(cmd, [binary], { env }, (err, stdout) => {\n          resolve(err ? { found: false } : { found: true, path: stdout.trim().split('\\n')[0] })\n        })\n      })\n\n    const binaries = [...new Set([...requested, 'git'])]\n    const statuses = await Promise.all(binaries.map((b) => check(b)))\n    const results: Record<string, { found: boolean; path?: string }> = {}\n    binaries.forEach((b, i) => {\n      results[b] = statuses[i]\n    })\n\n    return { results, platform: process.platform }\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 96,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:diff', async (_event, payload: { repoRoot: string }) => {\n    const result = await GitRepository.getDiffParsed(payload.repoRoot)\n    return result.unwrapOr({ files: [] })\n  })",
+   "label": "violation",
+   "note": "repoRoot passed to git unchecked"
+  },
+  {
+   "pr": 97,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('github:fetchBranchPRs', async (_event, payload: { repoRoot: string }) => {\n    const found = await gitHubService.findGitHubConnection(payload.repoRoot)\n    // No connection configured \u2014 silent empty return (expected for non-GitHub repos)\n    if (found.isErr() || !found.value) return {}\n    const { token, repo } = found.value\n    const worktrees = await GitRepository.listWorktrees(payload.repoRoot).unwrapOr([])\n    const branches = worktrees.map((w) => w.branch).filter((b) => b && b !== '(detached)')\n    if (branches.length === 0) return {}\n    const result = await gitHubService.fetchOpenPRsForBranches(\n      repo.apiUrl,\n      token,\n      repo.owner,\n      repo.repo,\n      branches,\n    )\n    return unwrapOrThrow(result, gitHubErrorMessage)\n  })",
+   "label": "violation",
+   "note": "repoRoot passed to git and GitHub lookup unchecked"
+  },
+  {
+   "pr": 132,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:getDefaultBranch', async (_event, payload: { repoRoot: string }) => {\n    try {\n      const { stdout } = await execFileAsync(\n        'gh',\n        ['repo', 'view', '--json', 'defaultBranchRef', '--jq', '.defaultBranchRef.name'],\n        { cwd: payload.repoRoot },\n      )\n      return stdout.trim() || 'main'\n    } catch (err) {\n      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {\n        console.warn('[git:getDefaultBranch] gh CLI not found, falling back to \"main\"')\n      }\n      return 'main'\n    }\n  })",
+   "label": "violation",
+   "note": "repoRoot used as cwd of gh unchecked"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('skills:deleteFile', async (_event, payload: { filePath: string }) => {\n    const filePath = path.normalize(path.resolve(payload.filePath))\n    const ext = path.extname(filePath).toLowerCase()\n    if (!['.md', '.mdc', '.yaml', '.yml'].includes(ext)) {\n      unwrapOrThrow(\n        err({\n          _tag: 'InvalidSource',\n          source: payload.filePath,\n          reason: 'Can only delete skill files (.md, .mdc, .yaml, .yml)',\n        } as SkillError),\n        skillErrorMessage,\n      )\n    }\n    const skillDirPatterns = [\n      /[/\\\\]\\.claude[/\\\\](commands|skills)[/\\\\]/,\n      /[/\\\\]\\.gemini[/\\\\]skills[/\\\\]/,\n      /[/\\\\]\\.cursor[/\\\\]rules[/\\\\]/,\n      /[/\\\\]\\.opencode[/\\\\]skills[/\\\\]/,\n      /[/\\\\]\\.agents[/\\\\]skills[/\\\\]/,\n      /[/\\\\]\\.claude[/\\\\]plugins[/\\\\]cache[/\\\\]/,\n    ]\n    if (!skillDirPatterns.some((p) => p.test(filePath))) {\n      unwrapOrThrow(\n        err({\n          _tag: 'InvalidSource',\n          source: payload.filePath,\n          reason: 'Can only delete files within agent skill directories',\n        } as SkillError),\n        skillErrorMessage,\n      )\n    }\n    await fs.promises.unlink(filePath)\n    return { success: true }\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 198,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:createFile', async (event, payload: { filePath: string }): Promise<void> => {\n    const resolved = await validateCreationPath(event.sender.id, payload.filePath)\n    // Ensure the parent dir exists (handles nested paths typed in the prompt\n    // like \"subdir/newfile.ts\" \u2014 creates \"subdir\" if missing).\n    await fs.promises.mkdir(path.dirname(resolved), { recursive: true })\n    // wx flag: error if file already exists. Avoids silently clobbering\n    // anything the user typed by accident.\n    const handle = await fs.promises.open(resolved, 'wx')\n    await handle.close()\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 198,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:createFile', async (event, payload: { filePath: string }): Promise<void> => {\n    const resolved = payload.filePath\n    // Ensure the parent dir exists (handles nested paths typed in the prompt\n    // like \"subdir/newfile.ts\" \u2014 creates \"subdir\" if missing).\n    await fs.promises.mkdir(path.dirname(resolved), { recursive: true })\n    // wx flag: error if file already exists. Avoids silently clobbering\n    // anything the user typed by accident.\n    const handle = await fs.promises.open(resolved, 'wx')\n    await handle.close()\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 198,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:mkdir', async (event, payload: { dirPath: string }): Promise<void> => {\n    const resolved = await validateCreationPath(event.sender.id, payload.dirPath)\n    await fs.promises.mkdir(resolved, { recursive: true })\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 198,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('fs:mkdir', async (event, payload: { dirPath: string }): Promise<void> => {\n    const resolved = payload.dirPath\n    await fs.promises.mkdir(resolved, { recursive: true })\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 227,
+   "path": "src/main/index.ts",
+   "code": "    ipcMain.handle('perf:openProject', (event, payload: { path: string }) => {\n      const resolved = realpathSync(resolve(payload.path))\n      ipcCommandBridge?.grantAttachPath(event.sender.id, resolved)\n      event.sender.send('url:action', { action: 'open', path: resolved })\n    })",
+   "label": "violation",
+   "note": "renderer path resolved and granted without validation"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:pushWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    const result = await GitRepository.push(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:pushWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const result = await GitRepository.push(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:pullWithPreferences', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    const rebase = (preferencesStore.get('gitPullRebase') ?? 'true') !== 'false'\n    const result = unwrapOrThrow(await GitRepository.pull(resolvedRepo, rebase), gitErrorMessage)\n    return { ...result, rebase }\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:pullWithPreferences', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const rebase = (preferencesStore.get('gitPullRebase') ?? 'true') !== 'false'\n    const result = unwrapOrThrow(await GitRepository.pull(resolvedRepo, rebase), gitErrorMessage)\n    return { ...result, rebase }\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:fetchWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    const result = await GitRepository.fetch(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:fetchWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const result = await GitRepository.fetch(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:stashWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    const result = await GitRepository.stash(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:stashWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const result = await GitRepository.stash(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:stashPopWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    const result = await GitRepository.stashPop(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:stashPopWorktree', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const result = await GitRepository.stashPop(resolvedRepo)\n    return unwrapOrThrow(result, gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('worktree:listBranches', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    return unwrapOrThrow(await GitRepository.listBranches(resolvedRepo), gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('worktree:listBranches', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    return unwrapOrThrow(await GitRepository.listBranches(resolvedRepo), gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('worktree:refreshBranches', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = await validatePathAccess(event.sender.id, payload.repoRoot)\n    unwrapOrThrow(await GitRepository.fetchAll(resolvedRepo), gitErrorMessage)\n    return unwrapOrThrow(await GitRepository.listBranches(resolvedRepo), gitErrorMessage)\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('worktree:refreshBranches', async (event, payload: { repoRoot: string }) => {\n    const resolvedRepo = payload.repoRoot\n    unwrapOrThrow(await GitRepository.fetchAll(resolvedRepo), gitErrorMessage)\n    return unwrapOrThrow(await GitRepository.listBranches(resolvedRepo), gitErrorMessage)\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('changes:getDiff', async (event, payload: { worktreePath: string }) => {\n    const resolvedWorktree = await validatePathAccess(event.sender.id, payload.worktreePath)\n    const result = await GitRepository.getDiffParsed(resolvedWorktree)\n    return result.unwrapOr({ files: [] })\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('changes:getDiff', async (event, payload: { worktreePath: string }) => {\n    const resolvedWorktree = payload.worktreePath\n    const result = await GitRepository.getDiffParsed(resolvedWorktree)\n    return result.unwrapOr({ files: [] })\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 251,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:diffFile', async (event, payload: { repoRoot: string; filePath: string }) => {\n    const resolvedRepo = await validateWorktreeScopedPathAccess(event.sender.id, payload.repoRoot)\n    validateFilePath(payload.filePath)\n    const result = await GitRepository.getFileDiff(resolvedRepo, payload.filePath)\n    return result.unwrapOr({ files: [] })\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 251,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('git:diffFile', async (event, payload: { repoRoot: string; filePath: string }) => {\n    const resolvedRepo = payload.repoRoot\n    const result = await GitRepository.getFileDiff(resolvedRepo, payload.filePath)\n    return result.unwrapOr({ files: [] })\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('taskTracker:saveAgentImage', async (_event, payload: { bytes: ArrayBuffer }) => {\n    const bytes = payload?.bytes\n    if (!(bytes instanceof ArrayBuffer) || bytes.byteLength === 0) throw new Error('Invalid image')\n    if (bytes.byteLength > 20 * 1024 * 1024) throw new Error('Image too large (max 20 MB)')\n    const dir = path.join(os.tmpdir(), 'canopy-agent-images')\n    await fs.promises.mkdir(dir, { recursive: true })\n    // The images only need to survive until the agent has read them \u2014 cap the directory at the\n    // newest few files so repeated sends can't grow the temp dir without bound.\n    try {\n      const entries = await fs.promises.readdir(dir)\n      const stats = await Promise.all(\n        entries\n          .filter((name) => /^image-\\d+\\.png$/.test(name))\n          .map(async (name) => ({\n            name,\n            mtime: (await fs.promises.stat(path.join(dir, name))).mtimeMs,\n          })),\n      )\n      const MAX_AGENT_IMAGES = 20\n      for (const old of stats.sort((a, b) => b.mtime - a.mtime).slice(MAX_AGENT_IMAGES - 1)) {\n        await fs.promises.unlink(path.join(dir, old.name)).catch(() => {})\n      }\n    } catch {\n      // Best-effort cleanup \u2014 never fail the save over it.\n    }\n    const filePath = path.join(dir, `image-${Date.now()}.png`)\n    await fs.promises.writeFile(filePath, Buffer.from(new Uint8Array(bytes)))\n    return filePath\n  })",
+   "label": "clean",
+   "note": "renderer values are validated before use"
+  },
+  {
+   "pr": 324,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('taskTracker:saveAgentImage', async (_event, payload: { bytes: ArrayBuffer }) => {\n    const bytes = payload?.bytes\n    const dir = path.join(os.tmpdir(), 'canopy-agent-images')\n    await fs.promises.mkdir(dir, { recursive: true })\n    // The images only need to survive until the agent has read them \u2014 cap the directory at the\n    // newest few files so repeated sends can't grow the temp dir without bound.\n    try {\n      const entries = await fs.promises.readdir(dir)\n      const stats = await Promise.all(\n        entries\n          .filter((name) => /^image-\\d+\\.png$/.test(name))\n          .map(async (name) => ({\n            name,\n            mtime: (await fs.promises.stat(path.join(dir, name))).mtimeMs,\n          })),\n      )\n      const MAX_AGENT_IMAGES = 20\n      for (const old of stats.sort((a, b) => b.mtime - a.mtime).slice(MAX_AGENT_IMAGES - 1)) {\n        await fs.promises.unlink(path.join(dir, old.name)).catch(() => {})\n      }\n    } catch {\n      // Best-effort cleanup \u2014 never fail the save over it.\n    }\n    const filePath = path.join(dir, `image-${Date.now()}.png`)\n    await fs.promises.writeFile(filePath, Buffer.from(new Uint8Array(bytes)))\n    return filePath\n  })",
+   "label": "violation",
+   "note": "validation removed",
+   "synthetic": "validation call removed"
+  },
+  {
+   "pr": 55,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('credentials:getForDomain', (_event, payload: { domain: string }) => {\n    return credentialStore.getForDomainMasked(payload.domain)\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 118,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('tracker:resolvedConfig', async (_event, payload: { repoRoot?: string }) => {\n    return resolveEffectiveConfig(payload.repoRoot)\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('skills:list', (_event, payload?: SkillListOptions) => {\n    return JSON.parse(JSON.stringify(skillRegistry.list(payload)))\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('skills:get', (_event, payload: { id: string }) => {\n    const skill = skillRegistry.get(payload.id)\n    return skill ? JSON.parse(JSON.stringify(skill)) : null\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('skills:install', async (_event, payload: SkillInstallOptions) => {\n    const result = await skillInstaller.install(payload)\n    const skill = unwrapOrThrow(result, skillErrorMessage)\n    skillRegistry.refresh()\n    broadcastSkillsChanged()\n    return JSON.parse(JSON.stringify(skill))\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 135,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('skills:scan', async (_event, payload?: { workspacePath?: string }) => {\n    const results = await scanSkills(payload?.workspacePath)\n    return JSON.parse(JSON.stringify(results))\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 146,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('profile:list', async (_event, payload?: { agentType?: AgentType }) => {\n    return (await profileStore.list(payload?.agentType)).unwrapOr([])\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 146,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('profile:get', async (_event, payload: { id: string }) => {\n    if (!payload || typeof payload.id !== 'string') {\n      throw new Error('profile:get requires a string id')\n    }\n    return (await profileStore.get(payload.id)).unwrapOr(null)\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 146,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('profile:delete', async (_event, payload: { id: string }) => {\n    if (!payload || typeof payload.id !== 'string') {\n      throw new Error('profile:delete requires a string id')\n    }\n    const result = await profileStore.delete(payload.id)\n    unwrapOrThrow(result, profileErrorMessage)\n    await broadcastProfilesChanged()\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('keychain:hasCredentials', async (event, payload: unknown) => {\n    const request = normalizeKeychainBindingPayload(payload)\n    await authorizeRendererKeychainBinding(event, request)\n    return keychainTokenStore.hasCredentials(request.provider, request.baseUrl, request.bindingKey)\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('keychain:deleteCredentials', async (event, payload: unknown) => {\n    const request = normalizeKeychainBindingPayload(payload)\n    await authorizeRendererKeychainBinding(event, request)\n    return keychainTokenStore.deleteCredentials(\n      request.provider,\n      request.baseUrl,\n      request.bindingKey,\n      request.bindingKey ? await currentLiveTrackerBindingKeys() : undefined,\n    )\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/handlers.ts",
+   "code": "  ipcMain.handle('keychain:getCredentials', async (event, payload: unknown) => {\n    const request = normalizeKeychainBindingPayload(payload)\n    await authorizeRendererKeychainBinding(event, request)\n    const creds = keychainTokenStore.getCredentials(\n      request.provider,\n      request.baseUrl,\n      request.bindingKey,\n    )\n    if (!creds) return null\n    // Never send token to renderer \u2014 only username and hasToken flag\n    const descriptor = keychainTokenStore.registry\n      .list()\n      .find((credential) => credential.id === creds.credentialId)\n    return {\n      username: creds.username,\n      hasToken: true,\n      credentialId: creds.credentialId,\n      intendedUses: descriptor?.intendedUses ?? [],\n      capabilities: descriptor?.capabilities ?? [],\n      verification: descriptor?.verification ?? {},\n      authenticationState: descriptor?.authenticationState ?? 'unknown',\n      bindings: creds.credentialId\n        ? keychainTokenStore.registry.bindingsFor(creds.credentialId)\n        : [],\n    }\n  })",
+   "label": "clean",
+   "note": "no renderer value reaches a file, network, command or database call"
+  }
+ ]
+}

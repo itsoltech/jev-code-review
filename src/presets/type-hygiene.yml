@@ -1,0 +1,17 @@
+# Escape hatches from the type system need a stated reason.
+vars:
+  typed_paths: ["**/*.ts", "**/*.tsx", "**/*.svelte"]
+
+rules:
+  - id: types.any-without-reason
+    description: '`any` without an eslint-disable comment that gives the reason'
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.typed_paths}}"]
+    exclude_paths: ["**/*.d.ts"]
+    # Type annotations have a space after the colon; "running:any" in a string does not.
+    regex: '(:\s+any\b|\bas any\b|<any>|\bany\[\])'
+    ignore_regex: 'eslint-disable|^\s*(//|\*)'
+    unless_previous_line: 'eslint-disable'

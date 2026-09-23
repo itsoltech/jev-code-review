@@ -1,0 +1,14 @@
+# Branching on unions goes through a matcher library instead of switch.
+vars:
+  matcher_paths: ["**/*.ts", "**/*.tsx", "**/*.svelte"]
+  matcher_library: ts-pattern
+
+rules:
+  - id: matching.switch-statement
+    description: 'switch instead of {{vars.matcher_library}} match()'
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.matcher_paths}}"]
+    regex: '\bswitch\s*\('

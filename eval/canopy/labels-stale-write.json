@@ -1,0 +1,941 @@
+{
+ "rule": "async.stale-write",
+ "guide": "After an await, the function writes component or store state with a result whose request depended on an input that can change while waiting (a selected path, id, key, query, form field or prop), with no check that the result is still current (request counter, cancelled flag, AbortSignal, or comparing the captured input with the current value). Clean: guarded; results stored keyed by their input; inputs fixed for the component's life (modal props); one-shot user actions; only busy flags, toasts or error messages after the await.",
+ "labeled_by": "Claude, 2026-09-23, from reading each function",
+ "items": [
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  async function handleStartElementPick(): Promise<void> {\n    pickMode = 'element'\n    const html = await window.api.browserStartElementPick(browserId)\n    pickMode = 'none'\n    if (!html) return\n    sendToClaude('```html\\n' + html + '\\n```\\n')\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "code": "  async function handleStartRegionCapture(): Promise<void> {\n    pickMode = 'region'\n    const filePath = await window.api.browserStartRegionCapture(browserId)\n    pickMode = 'none'\n    if (!filePath) return\n    sendToClaude(filePath + ' ')\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 18,
+   "path": "src/renderer/src/components/editor/EditorPane.svelte",
+   "code": "  async function loadFile(): Promise<void> {\n    loading = true\n    error = null\n    content = null\n    binary = false\n    truncated = false\n    try {\n      const result = await window.api.readFile(filePath)\n      if (result.binary) {\n        binary = true\n        fileSize = result.size\n      } else {\n        content = result.content\n        truncated = result.truncated\n        fileSize = result.size\n      }\n    } catch (e) {\n      error = e instanceof Error ? e.message : 'Failed to read file'\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "violation",
+   "note": "file content written for filePath after await; filePath can change"
+  },
+  {
+   "pr": 18,
+   "path": "src/renderer/src/lib/stores/fileTree.svelte.ts",
+   "code": "  async function expandDir(dirPath: string): Promise<void> {\n    try {\n      const entries = await window.api.readDir(dirPath)\n      expandedDirs[dirPath] = entries\n    } catch (e) {\n      // Show empty rather than leaving in collapsed state\n      expandedDirs[dirPath] = []\n      console.warn('readDir failed:', dirPath, e)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 55,
+   "path": "src/renderer/src/components/preferences/ViewportsPrefs.svelte",
+   "code": "  async function revealPassword(id: string, domain: string): Promise<void> {\n    if (revealedId === id) {\n      revealedId = null\n      revealedPassword = ''\n      if (revealTimer) clearTimeout(revealTimer)\n      return\n    }\n    const cred = await window.api.getCredentialDecrypted(id, domain)\n    if (cred) {\n      revealedId = id\n      revealedPassword = cred.password\n      if (revealTimer) clearTimeout(revealTimer)\n      revealTimer = setTimeout(() => {\n        revealedId = null\n        revealedPassword = ''\n      }, 5000)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 58,
+   "path": "src/renderer/src/lib/stores/onboarding.svelte.ts",
+   "code": "export async function initOnboarding(\n  mode: 'first-launch' | 'upgrade',\n  fromVersion?: string,\n): Promise<void> {\n  const completed = await window.api.getOnboardingCompleted()\n  const completedIds = new SvelteSet(completed)\n\n  let steps: OnboardingStep[]\n  if (mode === 'first-launch') {\n    steps = getFirstLaunchSteps()\n  } else {\n    steps = getFeatureSteps().filter(\n      (s) => !completedIds.has(s.id) && fromVersion && semverGt(s.introducedIn, fromVersion),\n    )\n  }\n\n  if (steps.length === 0) {\n    onboardingState.mode = 'none'\n    return\n  }\n\n  onboardingState.mode = mode\n  onboardingState.currentStep = 0\n  onboardingState.steps = steps\n  onboardingState.completedIds = completedIds\n  onboardingState.fromVersion = fromVersion\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 58,
+   "path": "src/renderer/src/lib/stores/onboarding.svelte.ts",
+   "code": "export async function finishOnboarding(): Promise<void> {\n  const aboutInfo = await window.api.getAboutInfo()\n  const allStepIds = onboardingState.steps.map((s) => s.id)\n  await window.api.completeOnboarding(allStepIds, aboutInfo.version)\n  onboardingState.mode = 'none'\n  onboardingState.steps = []\n  onboardingState.currentStep = 0\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/terminal/TmuxSessionBrowser.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    loading = true\n    error = null\n    try {\n      sessions = await window.api.tmuxListSessions()\n    } catch (err) {\n      error = err instanceof Error ? err.message : 'Failed to list sessions'\n    }\n    loading = false\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/terminal/TmuxSessionBrowser.svelte",
+   "code": "  async function attachSession(name: string): Promise<void> {\n    const worktreePath = workspaceState.selectedWorktreePath\n    if (!worktreePath || busy) return\n\n    busy = true\n    try {\n      const result = await window.api.tmuxAttach(name)\n      const { openTmuxTab } = await import('../../lib/stores/tabs.svelte')\n      openTmuxTab(name, result.sessionId, result.wsUrl, worktreePath)\n      closeDialog()\n    } catch (err) {\n      error = err instanceof Error ? err.message : 'Failed to attach session'\n    } finally {\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/terminal/TmuxSessionBrowser.svelte",
+   "code": "  async function killSession(name: string): Promise<void> {\n    if (busy) return\n    const confirmed = await confirm({\n      title: 'Kill session?',\n      message: `Session '${name}' will be terminated.`,\n      confirmLabel: 'Kill',\n      destructive: true,\n    })\n    if (!confirmed) return\n\n    busy = true\n    try {\n      await window.api.tmuxKillSession(name)\n      await refresh()\n    } catch (err) {\n      error = err instanceof Error ? err.message : 'Failed to kill session'\n    } finally {\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 64,
+   "path": "src/renderer/src/components/terminal/TmuxSessionBrowser.svelte",
+   "code": "  async function renameSession(name: string): Promise<void> {\n    if (busy) return\n    const result = await prompt({\n      title: 'Rename tmux session',\n      placeholder: 'New session name',\n      initialValue: name,\n      submitLabel: 'Rename',\n    })\n    if (result) {\n      busy = true\n      try {\n        await window.api.tmuxRenameSession(name, result.value)\n        updateTmuxSessionName(name, result.value)\n        await refresh()\n      } catch (err) {\n        error = err instanceof Error ? err.message : 'Failed to rename session'\n      } finally {\n        busy = false\n      }\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 65,
+   "path": "src/renderer/src/lib/stores/tools.svelte.ts",
+   "code": "export async function initToolStore(): Promise<void> {\n  if (initialized) return\n  initialized = true\n\n  const [fetchedTools, fetchedAvailability] = await Promise.all([\n    window.api.listTools(),\n    window.api.checkToolAvailability(),\n  ])\n\n  tools = fetchedTools\n  availability = fetchedAvailability\n\n  let availabilityGen = 0\n\n  unsubscribe = window.api.onToolsChanged(async (updated) => {\n    tools = updated\n    const gen = ++availabilityGen\n    const avail = await window.api.checkToolAvailability()\n    if (gen === availabilityGen) availability = avail\n  })\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 65,
+   "path": "src/renderer/src/lib/stores/tools.svelte.ts",
+   "code": "export async function initToolStore(): Promise<void> {\n  if (initialized) return\n  initialized = true\n\n  const [fetchedTools, fetchedAvailability] = await Promise.all([\n    window.api.listTools(),\n    window.api.checkToolAvailability(),\n  ])\n\n  tools = fetchedTools\n  availability = fetchedAvailability\n\n  let availabilityGen = 0\n\n  unsubscribe = window.api.onToolsChanged(async (updated) => {\n    tools = updated\n    const gen = ++availabilityGen\n    const avail = await window.api.checkToolAvailability()\n    availability = avail\n  })\n}",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/preferences/TaskBranchNamingPrefs.svelte",
+   "code": "  async function updatePreview(): Promise<void> {\n    try {\n      const vars = $state.snapshot(branchTemplate.customVars) as Record<string, string>\n      branchPreview = await window.api.taskTrackerRenderBranchPreview(templateInput, vars)\n    } catch {\n      branchPreview = '(invalid template)'\n    }\n  }",
+   "label": "violation",
+   "note": "preview written for a template the user keeps editing"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/preferences/TaskConnectionsPrefs.svelte",
+   "code": "  async function testNewConnection(): Promise<void> {\n    testing = true\n    testResult = ''\n    try {\n      await window.api.taskTrackerTestNewConnection({\n        provider: newProvider,\n        name: newName,\n        baseUrl: newBaseUrl.replace(/\\/$/, ''),\n        projectKey: '',\n        username: newUsername || undefined,\n        token: newToken,\n      })\n      testResult = 'success'\n    } catch {\n      testResult = 'fail'\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/preferences/TaskTrackerPrefs.svelte",
+   "code": "  async function loadBoardsForConnection(connId: string): Promise<void> {\n    if (scopeBoards[connId]) return\n    try {\n      const boards = await window.api.taskTrackerFetchBoards(connId)\n      scopeBoards = { ...scopeBoards, [connId]: boards }\n    } catch {\n      scopeBoards = { ...scopeBoards, [connId]: [] }\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/preferences/TaskTrackerPrefs.svelte",
+   "code": "  async function loadStatusesFromApi(): Promise<void> {\n    if (connections.length === 0) return\n    loadingStatuses = true\n    try {\n      const statuses = await window.api.taskTrackerFetchStatuses(connections[0].id)\n      availableStatuses = statuses.map((s) => s.name)\n    } catch {\n      addToast('Failed to fetch statuses')\n    } finally {\n      loadingStatuses = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/taskTracker/BranchCreateForm.svelte",
+   "code": "  async function init(): Promise<void> {\n    // Fetch full task data (with description) in parallel with branch type\n    const [typeInfo, foundTask] = await Promise.all([\n      window.api\n        .taskTrackerResolveBranchType(task.type, connectionId, selectedBoardId || undefined)\n        .catch(() => null),\n      window.api.taskTrackerFindTaskByKey(task.key).catch(() => null),\n    ])\n\n    if (foundTask) fullTask = foundTask as Task\n\n    if (typeInfo) {\n      branchTypeOptions = typeInfo.options\n      selectedBranchType = typeInfo.defaultType\n      templateHasBranchType = typeInfo.hasBranchType\n    } else {\n      branchTypeOptions = ['feat', 'fix', 'refactor', 'chore', 'docs', 'test']\n      selectedBranchType = 'feat'\n      templateHasBranchType = false\n    }\n\n    await updateBranchPreview()\n    initialized = true\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/taskTracker/BranchCreateForm.svelte",
+   "code": "  async function updateBranchPreview(): Promise<void> {\n    try {\n      const plain = JSON.parse(JSON.stringify(task)) as Task\n      resolvedBranchName = await window.api.taskTrackerResolveBranchName(\n        connectionId,\n        plain,\n        selectedBoardId || undefined,\n        templateHasBranchType ? selectedBranchType : undefined,\n      )\n    } catch {\n      resolvedBranchName = task.key\n    }\n  }",
+   "label": "violation",
+   "note": "branch name preview written after the user may have changed the type"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/taskTracker/BranchCreateForm.svelte",
+   "code": "  async function confirmBranchCreation(): Promise<void> {\n    const repoRoot = workspaceState.repoRoot\n    const currentBranch = workspaceState.branch\n    if (!repoRoot || !currentBranch || !resolvedBranchName) return\n\n    const baseDir = getPref('worktrees.baseDir', '~/canopy/worktrees')\n    const projectName = repoRoot.split('/').pop() || 'project'\n    const safeBranchName = resolvedBranchName.replace(/\\//g, '-')\n    const worktreeDir = `${baseDir}/${projectName}/${safeBranchName}`\n    const homedir = await window.api.getHomedir()\n    const worktreePath = worktreeDir.startsWith('~/') ? homedir + worktreeDir.slice(1) : worktreeDir\n\n    creatingWorktree = true\n    try {\n      await window.api.gitWorktreeAdd(repoRoot, worktreePath, resolvedBranchName, currentBranch)\n      closeDialog()\n      await selectWorktree(worktreePath)\n    } catch (e) {\n      creatingWorktree = false\n      closeDialog()\n      await new Promise((r) => setTimeout(r, 0))\n      await confirm({\n        title: 'Worktree Creation Failed',\n        message: e instanceof Error ? e.message : 'Failed to create worktree',\n        confirmLabel: 'OK',\n      })\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  async function loadBoards(): Promise<void> {\n    try {\n      const [boardList, userName] = await Promise.all([\n        window.api.taskTrackerFetchBoards(connectionId),\n        window.api.taskTrackerGetCurrentUser(connectionId).catch(() => ''),\n      ])\n      boards = boardList\n      currentUserName = userName\n      if (boards.length > 0) {\n        selectedBoardId = boards[0].id\n        restoreSavedFilters()\n      }\n    } catch (e) {\n      error = e instanceof Error ? e.message : 'Failed to load boards'\n    }\n    await fetchTasks()\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  async function fetchTasks(): Promise<void> {\n    loading = true\n    error = ''\n    try {\n      allTasks = await window.api.taskTrackerFetchTasks(connectionId, {\n        boardId: selectedBoardId || undefined,\n      })\n      // Auto-exclude done/closed only if no saved filters\n      if (!hasSavedFilters && excludedStatuses.size === 0 && allTasks.length > 0) {\n        const donePattern = /^(done|closed|resolved|cancelled|rejected|complete|gotowe|zamkni)/i\n        for (const task of allTasks) {\n          if (donePattern.test(task.status)) {\n            excludedStatuses.add(task.status)\n          }\n        }\n        saveFilters()\n      }\n    } catch (e) {\n      error = e instanceof Error ? e.message : 'Failed to fetch tasks'\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "violation",
+   "note": "tasks written for a board the user may have switched"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function loadConnections(): Promise<void> {\n  loading = true\n  try {\n    connections = await window.api.taskTrackerGetConnections()\n  } catch {\n    connections = []\n  } finally {\n    loading = false\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function removeConnection(connectionId: string): Promise<void> {\n  await window.api.taskTrackerRemoveConnection(connectionId)\n  connections = connections.filter((c) => c.id !== connectionId)\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 72,
+   "path": "src/renderer/src/lib/stores/tabs.svelte.ts",
+   "code": "async function resumeTab(tab: TabInfo): Promise<boolean> {\n  if (!tab.suspended) return true\n  const serialized = tab.suspended\n  try {\n    const rootSplit = await restoreSplitNode(serialized, tab.worktreePath)\n    tab.rootSplit = rootSplit\n    tab.focusedPaneId = firstLeaf(rootSplit).id\n    tab.suspended = undefined\n    return true\n  } catch (err) {\n    console.error('Failed to resume suspended tab:', err)\n    return false\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 74,
+   "path": "src/renderer/src/lib/stores/workspace.svelte.ts",
+   "code": "async function restoreProjectsImpl(paths: string[], activeWorktreePath?: string): Promise<void> {\n  const uniquePaths = [...new Set(paths)]\n  if (uniquePaths.length === 0) {\n    if (activeWorktreePath) await selectWorktree(activeWorktreePath)\n    return\n  }\n\n  const batchOrder = new Map<string, number>()\n  const results = await Promise.all(\n    uniquePaths.map((path, index) =>\n      attachProjectImpl(path, {\n        selectIfEmpty: false,\n        cleanupTmux: false,\n        batchOrder,\n        restoreIndex: index,\n      }),\n    ),\n  )\n\n  let targetPath = activeWorktreePath\n  if (!targetPath || !getProjectForWorktree(targetPath)) {\n    targetPath = results.find((result) => result)?.defaultWorktreePath\n  }\n\n  if (targetPath) {\n    await selectWorktree(targetPath)\n  }\n\n  await cleanupOrphanedTmuxSessions().catch(() => {})\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 89,
+   "path": "src/renderer/src/components/onboarding/steps/EnvironmentCheckStep.svelte",
+   "code": "  async function runCheck(): Promise<void> {\n    checking = true\n    const data = await window.api.checkDependencies([...onboardingState.selectedTools])\n    results = data.results\n    platform = data.platform\n    checking = false\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 89,
+   "path": "src/renderer/src/components/onboarding/steps/EnvironmentCheckStep.svelte",
+   "code": "  async function copyCommand(cmd: string): Promise<void> {\n    await navigator.clipboard.writeText(cmd)\n    copiedCmd = cmd\n    if (copyTimer) clearTimeout(copyTimer)\n    copyTimer = setTimeout(() => {\n      copiedCmd = null\n      copyTimer = null\n    }, 2000)\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 94,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function loadRepoConfig(repoRoot: string): Promise<void> {\n  loading = true\n  try {\n    repoConfig = await window.api.repoConfigLoad(repoRoot)\n    if (repoConfig) {\n      hasCredentials = await window.api.keychainHasCredentials(\n        repoConfig.tracker.provider,\n        repoConfig.tracker.baseUrl,\n      )\n      credentialsInfo = await window.api.keychainGetCredentials(\n        repoConfig.tracker.provider,\n        repoConfig.tracker.baseUrl,\n      )\n    } else {\n      hasCredentials = false\n      credentialsInfo = null\n    }\n  } catch {\n    repoConfig = null\n    hasCredentials = false\n    credentialsInfo = null\n  } finally {\n    loading = false\n  }\n}",
+   "label": "violation",
+   "note": "global repo config written for a repoRoot that may no longer be selected"
+  },
+  {
+   "pr": 94,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function saveRepoConfig(repoRoot: string, config: RepoConfig): Promise<void> {\n  // Strip Svelte proxies before sending through IPC (structured clone)\n  const plain = JSON.parse(JSON.stringify(config)) as RepoConfig\n  await window.api.repoConfigSave(repoRoot, plain)\n  repoConfig = plain\n}",
+   "label": "violation",
+   "note": "global repo config set after save for a possibly switched repo"
+  },
+  {
+   "pr": 94,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function initRepoConfig(repoRoot: string): Promise<RepoConfig> {\n  const config = await window.api.repoConfigInit(repoRoot)\n  repoConfig = config\n  return config\n}",
+   "label": "violation",
+   "note": "global repo config set for a possibly switched repo"
+  },
+  {
+   "pr": 94,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function loadActiveTask(worktreePath: string): Promise<void> {\n  // Read directly from backend \u2014 prefs cache may not have this key yet\n  const raw = await window.api.getPref(`activeTask.${worktreePath}`)\n  if (raw) {\n    try {\n      activeTask = JSON.parse(raw) as ActiveTaskContext\n    } catch {\n      activeTask = null\n    }\n  } else {\n    activeTask = null\n  }\n}",
+   "label": "violation",
+   "note": "active task written for a worktree that may no longer be selected"
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    loading = true\n    try {\n      diff = await window.api.gitDiff(worktreePath)\n    } catch {\n      diff = null\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "violation",
+   "note": "diff written for a worktreePath that can change"
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/DiffPane.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    loading = true\n    try {\n      const result = await window.api.gitDiff(worktreePath)\n      files = result.files\n    } catch {\n      files = []\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "violation",
+   "note": "diff files written for a worktreePath that can change"
+  },
+  {
+   "pr": 97,
+   "path": "src/renderer/src/components/github/CreatePRModal.svelte",
+   "code": "  async function submit(): Promise<void> {\n    const repoRoot = workspaceState.repoRoot\n    if (!repoRoot || !title.trim()) return\n\n    submitting = true\n    try {\n      const pr = await window.api.githubCreatePR(repoRoot, {\n        title: title.trim(),\n        body,\n        baseRefName: baseRefName || defaultBranch,\n        draft,\n      })\n      addToast(`PR #${pr.number} created`)\n      window.api.openExternal(pr.url)\n      closeDialog()\n      loadBranchPRs(repoRoot)\n    } catch (e) {\n      addToast(e instanceof Error ? e.message : 'Failed to create PR')\n    } finally {\n      submitting = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 97,
+   "path": "src/renderer/src/lib/stores/github.svelte.ts",
+   "code": "export async function loadBranchPRs(repoRoot: string, force = false): Promise<void> {\n  const now = Date.now()\n  const lastFetch = lastFetchByRepo[repoRoot] ?? 0\n  if (!force && now - lastFetch < DEBOUNCE_MS) return\n  loading = true\n  try {\n    const result = await window.api.githubFetchBranchPRs(repoRoot)\n    lastFetchByRepo[repoRoot] = Date.now()\n    // Merge with existing PRs from other repos\n    branchPRs = { ...branchPRs, ...result }\n  } catch (e) {\n    const msg = e instanceof Error ? e.message : String(e)\n    if (msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {\n      addToast(msg)\n    }\n  } finally {\n    loading = false\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 97,
+   "path": "src/renderer/src/lib/stores/github.svelte.ts",
+   "code": "export async function loadRepoInfo(repoRoot: string): Promise<void> {\n  try {\n    repoInfo = await window.api.githubGetRepoInfo(repoRoot)\n  } catch (e) {\n    repoInfo = null\n    const msg = e instanceof Error ? e.message : String(e)\n    if (msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {\n      addToast(msg)\n    }\n  }\n}",
+   "label": "violation",
+   "note": "repo info written for a repoRoot that may have changed"
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/preferences/FileWatcherPrefs.svelte",
+   "code": "  async function addPattern(): Promise<void> {\n    const trimmed = newPattern.trim()\n    if (!trimmed) return\n    if (patterns.includes(trimmed)) {\n      newPattern = ''\n      return\n    }\n    await persist([...patterns, trimmed])\n    newPattern = ''\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+   "code": "  async function handleRefresh(e: MouseEvent): Promise<void> {\n    // Stop propagation so clicking the button doesn't also toggle the section\n    e.stopPropagation()\n    if (refreshing) return\n    refreshing = true\n    try {\n      await fileTree.refreshExpandedDirs()\n    } finally {\n      refreshing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 118,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function loadGlobalConfig(): Promise<void> {\n  loadCount++\n  try {\n    globalConfig = await window.api.globalConfigLoad()\n    // Refresh credentials for all resolved trackers (global + repo) so\n    // repo tracker credential state isn't wiped when called in isolation\n    const resolved = await window.api.trackerResolvedConfig(lastRepoRoot)\n    if (resolved) {\n      resolvedConfig = resolved\n      await refreshCredentials(resolved.config.trackers)\n    } else if (globalConfig) {\n      await refreshCredentials(globalConfig.trackers)\n    }\n  } catch {\n    globalConfig = null\n  } finally {\n    loadCount--\n  }\n}",
+   "label": "violation",
+   "note": "resolved config written for lastRepoRoot captured before the awaits"
+  },
+  {
+   "pr": 118,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "export async function saveGlobalConfig(config: RepoConfig): Promise<void> {\n  const plain = JSON.parse(JSON.stringify(config)) as RepoConfig\n  await window.api.globalConfigSave(plain)\n  globalConfig = plain\n  // Re-resolve merged config so sidebar reflects the change\n  resolvedConfig = await window.api.trackerResolvedConfig(lastRepoRoot)\n  const allTrackers = resolvedConfig?.config.trackers ?? plain.trackers\n  await refreshCredentials(allTrackers)\n}",
+   "label": "violation",
+   "note": "resolved config written for lastRepoRoot after awaits"
+  },
+  {
+   "pr": 125,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "code": "  async function createWorktreeFromExisting(): Promise<void> {\n    if (!selectedBase) return\n    step = 'creating'\n    try {\n      const createLocalTracking = isRemoteOnly(selectedBase, branches)\n      await window.api.gitWorktreeCheckout(repoRoot, worktreeDir, selectedBase, createLocalTracking)\n      createdPath = worktreeDirDisplay\n\n      if (hasSetupConfig() && workspaceId) {\n        step = 'setup'\n        await runSetup()\n      } else {\n        finishCreation()\n      }\n    } catch (err) {\n      errorMessage = err instanceof Error ? err.message : String(err)\n      step = 'error'\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/runConfig/RunConfigEditorModal.svelte",
+   "code": "  async function handleSave(config: ConfigEntry): Promise<void> {\n    saving = true\n    error = ''\n    try {\n      const targetDir = isEdit ? initialConfigDir : selectedConfigDir\n      if (isEdit && configName) {\n        await updateRunConfig(targetDir, configName, config)\n      } else {\n        await addRunConfig(targetDir, config)\n      }\n      closeDialog()\n    } catch (e) {\n      error = e instanceof Error ? e.message : String(e)\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/runConfig/RunConfigManagerModal.svelte",
+   "code": "  async function handleSave(config: ConfigEntry): Promise<void> {\n    saving = true\n    formError = ''\n    try {\n      if (isNew) {\n        await addRunConfig(newConfigDir, config)\n        selectedKey = { configDir: newConfigDir, name: config.name }\n        isNew = false\n      } else if (selectedKey) {\n        await updateRunConfig(selectedKey.configDir, selectedKey.name, config)\n        selectedKey = { configDir: selectedKey.configDir, name: config.name }\n      }\n    } catch (e) {\n      formError = e instanceof Error ? e.message : String(e)\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/runConfig/RunConfigManagerModal.svelte",
+   "code": "  async function handleDelete(configDir: string, name: string): Promise<void> {\n    const confirmed = await confirm({\n      title: 'Delete Configuration',\n      message: `Delete \"${name}\"?`,\n      confirmLabel: 'Delete',\n      destructive: true,\n    })\n    if (confirmed) {\n      await deleteRunConfig(configDir, name)\n      if (selectedKey?.configDir === configDir && selectedKey?.name === name) {\n        selectedKey = null\n        isNew = false\n      }\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/lib/stores/runConfig.svelte.ts",
+   "code": "export async function discoverConfigs(): Promise<void> {\n  const repoRoot = workspaceState.repoRoot\n  if (!repoRoot) {\n    sources = []\n    return\n  }\n  isLoading = true\n  try {\n    sources = await window.api.runConfigDiscover(repoRoot)\n  } catch (e) {\n    console.warn('Failed to discover run configs:', e)\n    sources = []\n  } finally {\n    isLoading = false\n  }\n}",
+   "label": "violation",
+   "note": "run configs written for a repo that may have switched"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/dialogs/RemoteAcceptDeviceModal.svelte",
+   "code": "  async function handleAccept(): Promise<void> {\n    if (busy) return\n    busy = true\n    actionError = null\n    try {\n      await window.api.remote.acceptDevice(remember)\n      closeDialog()\n    } catch (e) {\n      console.error('[remote] accept failed:', devLogId, e)\n      actionError = e instanceof Error ? e.message : String(e)\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/dialogs/RemoteConnectionModal.svelte",
+   "code": "  async function copyUrl(): Promise<void> {\n    if (!pairingUrl) return\n    try {\n      await navigator.clipboard.writeText(pairingUrl)\n      copied = true\n      setTimeout(() => (copied = false), 1500)\n    } catch {\n      copied = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/dialogs/RemoteConnectionModal.svelte",
+   "code": "  async function acceptInline(): Promise<void> {\n    if (actionBusy) return\n    actionBusy = true\n    actionError = null\n    try {\n      await window.api.remote.acceptDevice(rememberDevice)\n    } catch (e) {\n      actionError = e instanceof Error ? e.message : String(e)\n    } finally {\n      actionBusy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/dialogs/RemoteConnectionModal.svelte",
+   "code": "  async function rejectInline(): Promise<void> {\n    if (actionBusy) return\n    actionBusy = true\n    actionError = null\n    try {\n      await window.api.remote.rejectDevice()\n    } catch (e) {\n      actionError = e instanceof Error ? e.message : String(e)\n    } finally {\n      actionBusy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/components/preferences/RemoteControlPrefs.svelte",
+   "code": "  async function loadTrustedDevices(): Promise<void> {\n    loading = true\n    try {\n      trustedDevices = await window.api.remote.listTrustedDevices()\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/RemoteApp.svelte",
+   "code": "  async function runPing(api: RemoteApi): Promise<void> {\n    const start = performance.now()\n    try {\n      const result = await api.diag.ping(pingCount + 1)\n      lastLatencyMs = Math.round(performance.now() - start)\n      pingCount = result.n\n      pingError = null\n    } catch (e) {\n      pingError = e instanceof Error ? e.message : String(e)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/RemoteApp.svelte",
+   "code": "  async function runAction(label: string, action: () => Promise<void>): Promise<void> {\n    if (!remoteApi) return\n    lastAction = null\n    actionError = null\n    try {\n      await action()\n      lastAction = label\n    } catch (e) {\n      actionError = e instanceof Error ? e.message : String(e)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/components/RemoteTerminalView.svelte",
+   "code": "  async function requestPeerFit(): Promise<void> {\n    if (resizeInFlight) return\n    const fit = computePeerFit()\n    if (!fit) return\n    // Skip if we're already at the requested dimensions \u2014 no need for a\n    // round trip just to reaffirm the same cols/rows.\n    if (term && fit.cols === term.cols && fit.rows === term.rows) return\n    resizeInFlight = true\n    try {\n      await api.pty.resize(sessionId, fit.cols, fit.rows)\n    } catch (e) {\n      console.warn('[remote-terminal] pty.resize failed:', e)\n    } finally {\n      resizeInFlight = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 135,
+   "path": "src/renderer/src/components/preferences/SkillPrefs.svelte",
+   "code": "  async function scanForSkills(): Promise<void> {\n    scanning = true\n    try {\n      scannedSkills = await window.api.scanSkills(workspaceState.selectedWorktreePath ?? undefined)\n    } catch (e) {\n      console.error('Scan failed:', e)\n    } finally {\n      scanning = false\n    }\n  }",
+   "label": "violation",
+   "note": "scanned skills written for a worktree that may have changed"
+  },
+  {
+   "pr": 135,
+   "path": "src/renderer/src/components/preferences/SkillPrefs.svelte",
+   "code": "  async function installSkill(): Promise<void> {\n    if (!installSource.trim()) {\n      installError = 'Source is required'\n      return\n    }\n\n    installing = true\n    installError = ''\n\n    try {\n      await window.api.installSkill({\n        source: installSource.trim(),\n        agents: [...installAgents],\n        scope: String(installScope),\n        method: String(installMethod),\n        workspacePath: workspaceState.selectedWorktreePath ?? undefined,\n      })\n      installSource = ''\n      installAgents = ['claude']\n      installScope = 'project'\n      installMethod = 'copy'\n      showInstallForm = false\n      await scanForSkills()\n    } catch (e) {\n      installError = e instanceof Error ? e.message : String(e)\n    } finally {\n      installing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 135,
+   "path": "src/renderer/src/lib/stores/skills.svelte.ts",
+   "code": "export async function initSkillStore(): Promise<void> {\n  if (initialized) return\n  initialized = true\n\n  skills = await window.api.listSkills()\n\n  unsubscribe = window.api.onSkillsChanged((updated) => {\n    skills = updated as SkillDefinition[]\n  })\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/components/preferences/AgentProfilesPanel.svelte",
+   "code": "  async function handleSave(): Promise<void> {\n    if (!selected) return\n    if (!draftName.trim()) {\n      addToast('Profile name is required')\n      return\n    }\n    saving = true\n    try {\n      const apiKey = draftApiKeyTouched ? (draftApiKey === '' ? null : draftApiKey) : undefined\n      const saved = await saveProfile({\n        id: selected.id,\n        agentType,\n        name: draftName.trim(),\n        prefs: $state.snapshot(draftPrefs) as ProfilePrefs,\n        apiKey,\n      })\n      selectedId = saved.id\n      dirty = false\n      draftApiKeyTouched = false\n      addToast(`Saved profile \"${saved.name}\"`)\n    } catch (e) {\n      addToast(`Save failed: ${e instanceof Error ? e.message : String(e)}`)\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/components/preferences/AgentProfilesPanel.svelte",
+   "code": "  async function handleNew(): Promise<void> {\n    saving = true\n    try {\n      const created = await saveProfile({\n        agentType,\n        name: uniqueName('New profile'),\n        prefs: {},\n      })\n      selectedId = created.id\n      await tick()\n      nameInputEl?.focus()\n      nameInputEl?.select()\n    } catch (e) {\n      addToast(`Create failed: ${e instanceof Error ? e.message : String(e)}`)\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/components/preferences/AgentProfilesPanel.svelte",
+   "code": "  async function selectProfile(id: string): Promise<void> {\n    if (id === selectedId) return\n    if (dirty) {\n      const ok = await confirm({\n        title: 'Discard unsaved changes?',\n        message: 'You have unsaved changes in the current profile. Switch anyway?',\n        confirmLabel: 'Discard',\n        destructive: true,\n      })\n      if (!ok) return\n    }\n    selectedId = id\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/lib/stores/profiles.svelte.ts",
+   "code": "export async function initProfileStore(): Promise<void> {\n  if (initialized) return\n  initialized = true\n  try {\n    profiles = await window.api.listProfiles()\n  } catch (e) {\n    console.warn('Failed to load profiles:', e)\n    profiles = []\n  }\n  unsubscribe = window.api.onProfilesChanged((list) => {\n    profiles = list\n  })\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/lib/stores/profiles.svelte.ts",
+   "code": "export async function saveProfile(input: ProfileInput): Promise<AgentProfileMasked> {\n  const saved = await window.api.saveProfile(input)\n  // The onProfilesChanged broadcast will deliver the full list shortly;\n  // also patch optimistically for a snappy UI.\n  const idx = profiles.findIndex((p) => p.id === saved.id)\n  if (idx >= 0) {\n    profiles[idx] = saved\n  } else {\n    profiles = [...profiles, saved]\n  }\n  return saved\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/lib/stores/profiles.svelte.ts",
+   "code": "export async function deleteProfile(id: string): Promise<void> {\n  await window.api.deleteProfile(id)\n  profiles = profiles.filter((p) => p.id !== id)\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/drawing/DrawingPane.svelte",
+   "code": "  async function handleSendToAgent(): Promise<void> {\n    if (sending || !canvasEl) return\n    sending = true\n    try {\n      await sendToAgent(canvasEl, strokes, selectedIds, doRedraw)\n    } finally {\n      sending = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/components/editor/EditorPane.svelte",
+   "code": "  async function handleSubTabClose(evt: MouseEvent, path: string): Promise<void> {\n    evt.stopPropagation()\n    const state = editorFiles.find((f) => f.filePath === path)\n    if (state?.dirty) {\n      const choice = await window.api.confirmUnsavedChanges([path])\n      if (choice === 'cancel') return\n      if (choice === 'save') {\n        const contentToWrite =\n          state.fileLineEnding === 'CRLF'\n            ? (state.currentContent ?? '').replace(/\\r?\\n/g, '\\r\\n')\n            : (state.currentContent ?? '')\n        skipNextWatcherEvent = true\n        let writeResult: Awaited<ReturnType<typeof window.api.writeFile>>\n        try {\n          writeResult = await window.api.writeFile(path, contentToWrite, state.fileMtimeMs)\n        } catch (e) {\n          skipNextWatcherEvent = false\n          saveError = `Failed to save: ${e instanceof Error ? e.message : String(e)}`\n          return\n        }\n        if (!writeResult.ok) {\n          skipNextWatcherEvent = false\n          saveError =\n            writeResult.tag === 'StaleWrite'\n              ? 'File changed on disk \u2014 reload before saving.'\n              : `Failed to save: ${writeResult.message}`\n          return\n        }\n        setTimeout(() => {\n          skipNextWatcherEvent = false\n        }, 1500)\n      }\n    }\n    editorRef?.closeBuffer(path)\n    closeEditorFile(paneId, path)\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/lib/stores/quickOpenStore.svelte.ts",
+   "code": "export async function ensureLoaded(worktreePath: string): Promise<string[]> {\n  if (!worktreePath) return []\n  const cached = state[worktreePath]\n  if (cached && !cached.loading && Date.now() - cached.fetchedAt < STALE_AFTER_MS) {\n    return cached.files\n  }\n  if (!state[worktreePath]) {\n    state[worktreePath] = { files: [], fetchedAt: 0, loading: true }\n  } else {\n    state[worktreePath].loading = true\n  }\n  try {\n    const files = await window.api.quickOpenListFiles(worktreePath)\n    state[worktreePath] = { files, fetchedAt: Date.now(), loading: false }\n    return files\n  } catch {\n    state[worktreePath].loading = false\n    return state[worktreePath].files\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 183,
+   "path": "src/renderer/src/lib/stores/quickOpenStore.svelte.ts",
+   "code": "export async function forceReload(worktreePath: string): Promise<string[]> {\n  if (!worktreePath) return []\n  if (!state[worktreePath]) {\n    state[worktreePath] = { files: [], fetchedAt: 0, loading: true }\n  } else {\n    state[worktreePath].loading = true\n  }\n  try {\n    const files = await window.api.quickOpenListFiles(worktreePath, true)\n    state[worktreePath] = { files, fetchedAt: Date.now(), loading: false }\n    return files\n  } catch {\n    state[worktreePath].loading = false\n    return state[worktreePath].files\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 198,
+   "path": "src/renderer/src/components/preferences/_partials/SavedPasswordsSection.svelte",
+   "code": "  async function revealPassword(id: string, domain: string): Promise<void> {\n    if (revealedId === id) {\n      revealedId = null\n      revealedPassword = ''\n      if (revealTimer) clearTimeout(revealTimer)\n      return\n    }\n    const cred = await window.api.getCredentialDecrypted(id, domain, 'reveal')\n    if (cred) {\n      revealedId = id\n      revealedPassword = cred.password\n      if (revealTimer) clearTimeout(revealTimer)\n      revealTimer = setTimeout(() => {\n        revealedId = null\n        revealedPassword = ''\n      }, 15000)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 198,
+   "path": "src/renderer/src/components/preferences/_partials/SkillInstallForm.svelte",
+   "code": "  async function install(): Promise<void> {\n    if (!source.trim()) {\n      error = 'Source is required'\n      return\n    }\n\n    installing = true\n    error = ''\n\n    try {\n      await window.api.installSkill({\n        source: source.trim(),\n        agents: [...agents],\n        scope: String(scope),\n        method: String(method),\n        workspacePath,\n      })\n      reset()\n      await onInstalled()\n      onClose()\n    } catch (e) {\n      error = e instanceof Error ? e.message : String(e)\n    } finally {\n      installing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemoteSection.svelte",
+   "code": "  async function startListening(): Promise<void> {\n    if (busy) return\n    if (!listenAllInterfaces && !hasListenerInterface) {\n      errorMsg = 'Select a network adapter or listen on all adapters.'\n      return\n    }\n    busy = true\n    errorMsg = null\n    try {\n      await window.api.remote.ensureListening({ allowWithoutTrusted: true })\n      await loadInterfaces()\n    } catch (e) {\n      errorMsg = e instanceof Error ? e.message : String(e)\n    } finally {\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemoteSection.svelte",
+   "code": "  async function startPairingWithInterface(interfaceName: string): Promise<void> {\n    if (busy) return\n    busy = true\n    errorMsg = null\n    try {\n      await window.api.remote.start(interfaceName)\n      pairSetupOpen = false\n      await loadInterfaces()\n    } catch (e) {\n      errorMsg = e instanceof Error ? e.message : String(e)\n    } finally {\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemoteSection.svelte",
+   "code": "  async function stopSession(): Promise<void> {\n    if (busy) return\n    busy = true\n    errorMsg = null\n    try {\n      await window.api.remote.stop()\n      pairSetupOpen = false\n      qrInterface = ''\n    } catch (e) {\n      errorMsg = e instanceof Error ? e.message : String(e)\n    } finally {\n      busy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 241,
+   "path": "src/renderer/src/components/sidebar/RemoteSection.svelte",
+   "code": "  async function copyUrl(): Promise<void> {\n    if (!pairingUrl) return\n    try {\n      await navigator.clipboard.writeText(pairingUrl)\n      copied = true\n      if (copiedTimer) clearTimeout(copiedTimer)\n      copiedTimer = setTimeout(() => {\n        copied = false\n        copiedTimer = null\n      }, 1500)\n    } catch {\n      copied = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/github/CreateTaskPRModal.svelte",
+   "code": "  async function create(): Promise<void> {\n    // A linked task must have resolved before creating; a branch-level PR has no task at all.\n    if (creating || !title.trim() || (task && !fullTask)) return\n    creating = true\n    try {\n      // $state values are proxies and fail Electron's structured clone (\"An object could not be\n      // cloned\") \u2014 snapshot everything non-primitive before it crosses the IPC boundary.\n      const result = await window.api.taskTrackerCreatePR(\n        repoRoot,\n        (fullTask ? $state.snapshot(fullTask) : { key: '' }) as Parameters<\n          typeof window.api.taskTrackerCreatePR\n        >[1],\n        branch,\n        task?.connectionId || undefined,\n        {\n          title: title.trim(),\n          body,\n          targetBranch,\n          reviewers: $state.snapshot(reviewers),\n          assignees: $state.snapshot(assignees),\n        },\n      )\n      addToast(`PR created: ${result.title} \u2192 ${result.targetBranch}`)\n      // Capture props BEFORE closeDialog unmounts this component \u2014 prop getters return\n      // undefined afterwards, which used to open the details panel for branch \"undefined\".\n      const root = repoRoot\n      const forBranch = branch\n      void loadBranchPRs(root)\n      closeDialog()\n      showPRDetails(root, forBranch)\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to create PR'))\n      creating = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/github/PRDetailsModal.svelte",
+   "code": "  async function load(): Promise<void> {\n    loading = true\n    error = ''\n    remoteBranchAlive = null\n    // A refresh replaces `pr` \u2014 any armed destructive action would confirm against stale state.\n    armed = null\n    try {\n      pr = await window.api.taskTrackerPRDetails(repoRoot, branch)\n      if (!pr) error = `No pull request found for ${branch}`\n      if (pr && pr.state !== 'OPEN') {\n        const head = pr.headRefName\n        void window.api.taskTrackerRemoteBranchExists(repoRoot, head).then((alive) => {\n          if (pr?.headRefName === head) remoteBranchAlive = alive\n        })\n      }\n    } catch (e) {\n      // The previous PR object is stale once a refresh fails \u2014 keeping it would re-enable its\n      // merge/close/delete actions against state we can no longer trust.\n      pr = null\n      error = ipcErrorMessage(e, 'Failed to load PR details')\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/github/PRDetailsModal.svelte",
+   "code": "  async function runAction(kind: 'merge' | 'close' | 'delete'): Promise<void> {\n    // While details (re)load, the on-screen PR may be stale \u2014 no mutations until it settles\n    // cleanly (a failed refresh clears `pr`, but keep the error gate as defense in depth).\n    if (!pr || acting || loading || error) return\n    if (armed !== kind) {\n      armed = kind\n      return\n    }\n    armed = null\n    acting = kind\n    try {\n      if (kind === 'merge') {\n        await window.api.taskTrackerPRMerge(repoRoot, pr.number, mergeStrategy, deleteBranchAfter)\n        addToast(`PR #${pr.number} merged`)\n      } else if (kind === 'close') {\n        await window.api.taskTrackerPRClose(repoRoot, pr.number, deleteBranchAfter)\n        addToast(`PR #${pr.number} closed`)\n      } else {\n        await window.api.taskTrackerPRDeleteBranch(repoRoot, pr.headRefName)\n        addToast(`Remote branch ${pr.headRefName} deleted`)\n        remoteBranchAlive = false\n      }\n      void loadBranchPRs(repoRoot)\n      await load()\n    } catch (e) {\n      addToast(ipcErrorMessage(e, `Failed to ${kind === 'delete' ? 'delete branch' : kind}`))\n    } finally {\n      acting = null\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ConnectionsPrefs.svelte",
+   "code": "  async function testConnection(): Promise<void> {\n    testing = true\n    testResult = ''\n    try {\n      await window.api.taskTrackerTestNewConnection({\n        provider: editProvider,\n        name: `${editProvider}:${editBaseUrl}`,\n        baseUrl: editBaseUrl.replace(/\\/$/, ''),\n        projectKey: editProjectKey || undefined,\n        username: editUsername || undefined,\n        token: editToken,\n      })\n      testResult = 'success'\n    } catch {\n      testResult = 'fail'\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ConnectionsPrefs.svelte",
+   "code": "  async function deleteConnection(trackerId: string): Promise<void> {\n    if (!globalCfg) return\n    const tracker = trackers.find((t) => t.id === trackerId)\n\n    const ok = await confirm({\n      title: 'Delete connection',\n      message: tracker\n        ? `Delete the ${providerLabel(tracker.provider)} connection${tracker.baseUrl ? ` at ${tracker.baseUrl}` : ''}?`\n        : 'Delete this connection?',\n      details: 'Removes your personal connection and its stored credentials on this machine.',\n      confirmLabel: 'Delete connection',\n      destructive: true,\n    })\n    if (!ok) return\n\n    // Delete stored credentials only when no remaining global tracker shares the same\n    // provider + baseUrl pair the credentials are keyed by.\n    if (tracker?.baseUrl) {\n      const shared = trackers.some(\n        (t) =>\n          t.id !== trackerId && t.provider === tracker.provider && t.baseUrl === tracker.baseUrl,\n      )\n      if (!shared) {\n        try {\n          await window.api.keychainDeleteCredentials(tracker.provider, tracker.baseUrl)\n        } catch {\n          // best-effort cleanup\n        }\n      }\n    }\n\n    const updated = $state.snapshot(globalCfg) as typeof globalCfg\n    updated.trackers = updated.trackers.filter((t) => t.id !== trackerId)\n    try {\n      await saveGlobalConfig(updated)\n      addToast('Connection deleted')\n    } catch (e) {\n      addToast(e instanceof Error ? e.message : 'Failed to delete connection')\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  async function startEditProjects(trackerId: string): Promise<void> {\n    const seq = ++projectsFetchSeq\n    editingProjectsFor = trackerId\n    projectsError = ''\n    projectsLoading = true\n    selectedProjects.clear()\n    for (const k of trackers.find((t) => t.id === trackerId)?.projects ?? []) {\n      selectedProjects.add(k)\n    }\n    try {\n      // `all: true` bypasses the whitelist so deselected projects stay visible for re-adding.\n      const fetched = await window.api.trackerConfigFetchProjects(\n        repoRoot ?? undefined,\n        trackerId,\n        true,\n      )\n      if (seq !== projectsFetchSeq) return\n      projectOptions = fetched\n    } catch (e) {\n      if (seq !== projectsFetchSeq) return\n      projectsError = e instanceof Error ? e.message : 'Failed to load projects'\n      projectOptions = []\n    } finally {\n      if (seq === projectsFetchSeq) projectsLoading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  async function startEditProjects(trackerId: string): Promise<void> {\n    const seq = ++projectsFetchSeq\n    editingProjectsFor = trackerId\n    projectsError = ''\n    projectsLoading = true\n    selectedProjects.clear()\n    for (const k of trackers.find((t) => t.id === trackerId)?.projects ?? []) {\n      selectedProjects.add(k)\n    }\n    try {\n      // `all: true` bypasses the whitelist so deselected projects stay visible for re-adding.\n      const fetched = await window.api.trackerConfigFetchProjects(\n        repoRoot ?? undefined,\n        trackerId,\n        true,\n      )\n      projectOptions = fetched\n    } catch (e) {\n      projectsError = e instanceof Error ? e.message : 'Failed to load projects'\n      projectOptions = []\n    } finally {\n      projectsLoading = false\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  async function saveProjects(): Promise<void> {\n    const cfg = getRepoConfig()\n    if (!cfg || !editingProjectsFor || !repoRoot) return\n    const updated = $state.snapshot(cfg) as typeof cfg\n    const tracker = updated!.trackers.find((t) => t.id === editingProjectsFor)\n    if (!tracker) return\n    const picked = [...selectedProjects]\n    // Everything (or nothing) selected = no whitelist \u2014 the field disappears from config.json.\n    tracker.projects =\n      picked.length === 0 || picked.length === projectOptions.length ? undefined : picked.sort()\n    await saveRepoConfig(repoRoot, updated!)\n    editingProjectsFor = null\n    addToast('Project selection saved')\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  async function testConnection(): Promise<void> {\n    testing = true\n    testResult = ''\n    try {\n      await window.api.taskTrackerTestNewConnection({\n        provider: formProvider,\n        name: `${formProvider}:${formBaseUrl}`,\n        baseUrl: formBaseUrl.replace(/\\/$/, ''),\n        projectKey: formProjectKey || undefined,\n        username: formUsername || undefined,\n        token: formToken,\n      })\n      testResult = 'success'\n    } catch {\n      testResult = 'fail'\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectConnections.svelte",
+   "code": "  async function saveCredentials(): Promise<void> {\n    const url = formBaseUrl.replace(/\\/$/, '')\n    try {\n      await window.api.keychainSetCredentials(\n        formProvider,\n        url,\n        formToken,\n        formUsername || undefined,\n      )\n      await ensurePersonalConnection(formProvider, url, formProjectKey || undefined)\n    } catch (e) {\n      addToast(e instanceof Error ? e.message : 'Failed to save credentials')\n      return\n    }\n    if (repoRoot) await loadRepoConfig(repoRoot)\n    connectingId = null\n    addToast('Credentials saved')\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  async function cancelEdit(): Promise<void> {\n    editorRef?.discardPending()\n    if (editSnapshot && repoRoot) await saveRepoConfig(repoRoot, editSnapshot)\n    editing = null\n    editSnapshot = null\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/preferences/ProjectNamingSection.svelte",
+   "code": "  async function removeOverride(type: Group, scope: string): Promise<void> {\n    const cfg = getRepoConfig()\n    if (!cfg || scope === 'default') return\n    const updated = $state.snapshot(cfg) as typeof cfg\n    const entry = updated!.projectOverrides[scope]\n    if (entry) {\n      if (type === 'branch') delete entry.branchTemplate\n      else delete entry.prTemplate\n      if (Object.keys(entry).length === 0) delete updated!.projectOverrides[scope]\n    }\n    await saveRepoConfig(repoRoot, updated!)\n    editing = null\n    editSnapshot = null\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/sidebar/GitSection.svelte",
+   "code": "  async function refreshChangeCount(): Promise<void> {\n    const path = workspaceState.selectedWorktreePath ?? workspaceState.repoRoot\n    if (!path) {\n      changeCount = 0\n      return\n    }\n    try {\n      const status = await window.api.fileTreeGetGitStatus(path, path)\n      changeCount = Object.keys(status.statuses).length\n    } catch {\n      changeCount = 0\n    }\n  }",
+   "label": "violation",
+   "note": "change count written for a worktree that may have switched"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function addImageFiles(list: FileList | File[]): Promise<void> {\n    imageError = ''\n    for (const f of [...list]) {\n      if (!f.type.startsWith('image/')) continue\n      if (pendingImages.length >= MAX_IMAGES) {\n        imageError = `Up to ${MAX_IMAGES} images per task`\n        break\n      }\n      if (f.size > MAX_IMAGE_BYTES) {\n        imageError = `${f.name || 'image'}: images up to 10 MB`\n        continue\n      }\n      const dataUrl = await new Promise<string>((resolve) => {\n        const r = new FileReader()\n        r.onload = () => resolve(String(r.result))\n        r.onerror = () => resolve('')\n        r.readAsDataURL(f)\n      })\n      const dataBase64 = dataUrl.split(',')[1]\n      if (!dataBase64) {\n        imageError = `${f.name || 'image'}: could not read the file`\n        continue\n      }\n      const ext = (f.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '')\n      const fallback = `image-${pendingImages.length + 1}.${ext}`\n      const filename = (f.name || fallback).replace(/[^\\w.\\- ()[\\]]/g, '-').slice(0, 200)\n      pendingImages.push({\n        filename,\n        mimeType: f.type,\n        dataBase64,\n        sizeKb: Math.round(f.size / 1024),\n      })\n      const marker = imageMarker(filename)\n      if (marker) insertMarkerAtCaret(marker)\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function loadMeta(): Promise<void> {\n    loadingMeta = true\n    metaError = ''\n    try {\n      const [projectList, boardList, userName] = await Promise.all([\n        fields.project\n          ? window.api.trackerConfigFetchProjects(repoRoot, trackerId)\n          : Promise.resolve([] as Array<{ key: string; name: string }>),\n        fields.board\n          ? window.api.trackerConfigFetchBoards(repoRoot, trackerId)\n          : Promise.resolve([] as Array<{ id: string; name: string; projectKey?: string }>),\n        window.api.trackerConfigGetCurrentUser(repoRoot, trackerId).catch(() => ''),\n      ])\n      projects = projectList\n      boards = boardList\n      if (fields.project && projects.length > 0) {\n        const last = getPref(`taskTracker.lastProject.${trackerId}`)\n        projectKey = projects.some((p) => p.key === last) ? last : projects[0].key\n      }\n      await loadProjectMeta(userName)\n      if (!fields.board) {\n        // GitHub: milestones need no board \u2014 load them right away.\n        await loadSprints('repo')\n      }\n    } catch (e) {\n      metaError = ipcErrorMessage(e, 'Failed to load tracker metadata')\n    } finally {\n      loadingMeta = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function loadProjectMeta(currentUserName = ''): Promise<void> {\n    const seq = ++metaSeq\n    projectMetaError = ''\n    try {\n      const [typeList, userList] = await Promise.all([\n        // No .catch \u2014 a failure (expired credentials, permissions) must surface, not silently\n        // hide the type/assignee fields while the form stays submittable.\n        fields.type\n          ? window.api.trackerConfigFetchCreateTaskTypes(repoRoot, trackerId, projectKey)\n          : Promise.resolve([] as Array<{ name: string; iconUrl?: string }>),\n        window.api.trackerConfigFetchAssignableUsers(repoRoot, trackerId, projectKey),\n      ])\n      if (seq !== metaSeq) return\n      types = typeList\n      users = userList\n      typeName = types.find((t) => t.name.toLowerCase() === 'task')?.name ?? types[0]?.name ?? ''\n      // Creating a task for yourself is the common case \u2014 preselect the current user when we\n      // can match them in the assignable list.\n      if (currentUserName) {\n        assigneeId = users.find((u) => u.displayName === currentUserName)?.id ?? ''\n      } else if (assigneeId && !users.some((u) => u.id === assigneeId)) {\n        assigneeId = ''\n      }\n      void resolveIcons()\n    } catch (e) {\n      if (seq !== metaSeq) return\n      types = []\n      users = []\n      projectMetaError = ipcErrorMessage(e, 'Failed to load task types and assignees')\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function loadProjectMeta(currentUserName = ''): Promise<void> {\n    const seq = ++metaSeq\n    projectMetaError = ''\n    try {\n      const [typeList, userList] = await Promise.all([\n        // No .catch \u2014 a failure (expired credentials, permissions) must surface, not silently\n        // hide the type/assignee fields while the form stays submittable.\n        fields.type\n          ? window.api.trackerConfigFetchCreateTaskTypes(repoRoot, trackerId, projectKey)\n          : Promise.resolve([] as Array<{ name: string; iconUrl?: string }>),\n        window.api.trackerConfigFetchAssignableUsers(repoRoot, trackerId, projectKey),\n      ])\n      types = typeList\n      users = userList\n      typeName = types.find((t) => t.name.toLowerCase() === 'task')?.name ?? types[0]?.name ?? ''\n      // Creating a task for yourself is the common case \u2014 preselect the current user when we\n      // can match them in the assignable list.\n      if (currentUserName) {\n        assigneeId = users.find((u) => u.displayName === currentUserName)?.id ?? ''\n      } else if (assigneeId && !users.some((u) => u.id === assigneeId)) {\n        assigneeId = ''\n      }\n      void resolveIcons()\n    } catch (e) {\n      types = []\n      users = []\n      projectMetaError = ipcErrorMessage(e, 'Failed to load task types and assignees')\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function loadSprints(nextBoardId: string): Promise<void> {\n    const seq = ++sprintSeq\n    boardId = nextBoardId\n    sprintId = ''\n    sprints = []\n    if (!nextBoardId) return\n    loadingSprints = true\n    try {\n      const fetched = await window.api.trackerConfigFetchSprints(repoRoot, trackerId, nextBoardId)\n      if (seq !== sprintSeq) return\n      sprints = fetched\n    } catch (e) {\n      if (seq !== sprintSeq) return\n      submitError = ipcErrorMessage(e, 'Failed to load sprints')\n    } finally {\n      if (seq === sprintSeq) loadingSprints = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "code": "  async function loadSprints(nextBoardId: string): Promise<void> {\n    const seq = ++sprintSeq\n    boardId = nextBoardId\n    sprintId = ''\n    sprints = []\n    if (!nextBoardId) return\n    loadingSprints = true\n    try {\n      const fetched = await window.api.trackerConfigFetchSprints(repoRoot, trackerId, nextBoardId)\n      sprints = fetched\n    } catch (e) {\n      submitError = ipcErrorMessage(e, 'Failed to load sprints')\n    } finally {\n      loadingSprints = false\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskListPicker.svelte",
+   "code": "  async function loadProjects(): Promise<void> {\n    try {\n      const [projectList, userName, statuses] = await Promise.all([\n        // No .catch here \u2014 a projects-load failure (expired credentials, tracker down) must reach\n        // the outer catch and surface the error/Retry state instead of an empty silent picker.\n        window.api.trackerConfigFetchProjects(repoRoot, trackerId),\n        window.api.trackerConfigGetCurrentUser(repoRoot, trackerId).catch(() => ''),\n        window.api\n          .trackerConfigFetchStatuses(repoRoot, trackerId)\n          .catch(() => [] as Array<{ id: string; name: string; statusCategory?: string }>),\n      ])\n      projects = projectList\n      currentUserName = userName\n      trackerStatuses = statuses\n      if (projects.length > 0) {\n        const lastProject = getPref(`taskTracker.lastProject.${trackerId}`)\n        selectedProjectKey = projects.some((p) => p.key === lastProject)\n          ? lastProject\n          : projects[0].key\n        restoreSavedFilters()\n      }\n    } catch (e) {\n      error = ipcErrorMessage(e, 'Failed to load projects')\n    }\n    await fetchTasks()\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskListPicker.svelte",
+   "code": "  async function fetchTasks(): Promise<void> {\n    const seq = ++fetchSeq\n    loading = true\n    error = ''\n    try {\n      const fetched = await window.api.trackerConfigFetchTasks(repoRoot, trackerId, {\n        projectKey: selectedProjectKey || undefined,\n      })\n      if (seq !== fetchSeq) return\n      allTasks = fetched\n      // First visit to a project: hide done-ish statuses by default.\n      if (!hasSavedFilters && excludedStatuses.size === 0 && allTasks.length > 0) {\n        for (const task of allTasks) {\n          if (DONE_STATUS_PATTERN.test(task.status)) {\n            excludedStatuses.add(task.status)\n          }\n        }\n        saveFilters()\n      }\n    } catch (e) {\n      if (seq !== fetchSeq) return\n      error = ipcErrorMessage(e, 'Failed to fetch tasks')\n    } finally {\n      if (seq === fetchSeq) loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskListPicker.svelte",
+   "code": "  async function fetchTasks(): Promise<void> {\n    const seq = ++fetchSeq\n    loading = true\n    error = ''\n    try {\n      const fetched = await window.api.trackerConfigFetchTasks(repoRoot, trackerId, {\n        projectKey: selectedProjectKey || undefined,\n      })\n      allTasks = fetched\n      // First visit to a project: hide done-ish statuses by default.\n      if (!hasSavedFilters && excludedStatuses.size === 0 && allTasks.length > 0) {\n        for (const task of allTasks) {\n          if (DONE_STATUS_PATTERN.test(task.status)) {\n            excludedStatuses.add(task.status)\n          }\n        }\n        saveFilters()\n      }\n    } catch (e) {\n      error = ipcErrorMessage(e, 'Failed to fetch tasks')\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  async function applyTransition(): Promise<void> {\n    const key = panel?.taskKey\n    if (!key || !selectedTransition) return\n    applying = true\n    applyError = ''\n    try {\n      await window.api.trackerConfigApplyTransition({\n        repoRoot: worktreePath,\n        trackerId: panelTrackerId,\n        taskKey: key,\n        transitionId: selectedTransition.id,\n        fields: Object.keys(fieldValues).length ? { ...fieldValues } : undefined,\n        comment: transitionComment.trim() || undefined,\n      })\n      addToast(`${key} \u2192 ${selectedTransition.toStatus || selectedTransition.name}`)\n      await refresh(key)\n    } catch (e) {\n      applyError = ipcErrorMessage(e)\n    } finally {\n      applying = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  async function ensurePng(blob: Blob): Promise<Blob> {\n    if (blob.type === 'image/png') return blob\n    const bmp = await createImageBitmap(blob)\n    const canvas = document.createElement('canvas')\n    canvas.width = bmp.width\n    canvas.height = bmp.height\n    canvas.getContext('2d')!.drawImage(bmp, 0, 0)\n    return await new Promise((res, rej) =>\n      canvas.toBlob((b) => (b ? res(b) : rej(new Error('PNG conversion failed'))), 'image/png'),\n    )\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  async function sendToAgent(): Promise<void> {\n    if (!composeTarget || sendingToAgent) return\n    const sessions = getAiSessions(worktreePath)\n    if (sessions.length === 0) return\n    sendingToAgent = true\n    try {\n      // Deliver the image as a temp FILE the agent reads by path \u2014 clipboard + Ctrl+V paste\n      // proved unreliable (the terminal/agent never received the pasted image).\n      let imagePath = ''\n      if (composeImage) {\n        try {\n          const png = await ensurePng(composeImage)\n          imagePath = await window.api.taskTrackerSaveAgentImage(await png.arrayBuffer())\n        } catch {\n          addToast('Image attach failed \u2014 sending text only')\n        }\n      }\n      const message = buildAgentMessage(imagePath)\n      if (!message) return\n      const sessionId = sessions[0].sessionId\n      await window.api.agentSendTaskContext({ text: message, worktreePath, sessionId })\n      focusSessionByPtyId(sessionId)\n      window.dispatchEvent(new CustomEvent('canopy:focus-terminal', { detail: { sessionId } }))\n      addToast('Sent to agent')\n      closeCompose()\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to send to agent'))\n    } finally {\n      sendingToAgent = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  async function submitComment(): Promise<void> {\n    const key = panel?.taskKey\n    const body = newComment.trim()\n    if (!key || !body) return\n    addingComment = true\n    try {\n      await window.api.trackerConfigAddComment({\n        repoRoot: worktreePath,\n        trackerId: panelTrackerId,\n        taskKey: key,\n        body,\n      })\n      newComment = ''\n      addToast('Comment added')\n      const refreshed = await window.api.trackerConfigFetchTaskComments(\n        worktreePath,\n        key,\n        panelTrackerId,\n      )\n      if (panel?.taskKey === key) comments = refreshed\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to add comment'))\n    } finally {\n      addingComment = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPanel.svelte",
+   "code": "  async function submitComment(): Promise<void> {\n    const key = panel?.taskKey\n    const body = newComment.trim()\n    if (!key || !body) return\n    addingComment = true\n    try {\n      await window.api.trackerConfigAddComment({\n        repoRoot: worktreePath,\n        trackerId: panelTrackerId,\n        taskKey: key,\n        body,\n      })\n      newComment = ''\n      addToast('Comment added')\n      const refreshed = await window.api.trackerConfigFetchTaskComments(\n        worktreePath,\n        key,\n        panelTrackerId,\n      )\n      comments = refreshed\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to add comment'))\n    } finally {\n      addingComment = false\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  async function unlinkTask(task: TrackerTaskLite): Promise<void> {\n    const worktreePath = workspaceState.selectedWorktreePath ?? workspaceState.repoRoot\n    if (!worktreePath || linking || branchTaskKeys.has(task.key)) return\n    linking = true\n    try {\n      await removeActiveTask(worktreePath, task.key)\n      await resolvePanelTask(worktreePath, workspaceState.branch)\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to unlink task'))\n      return\n    } finally {\n      linking = false\n    }\n    addToast(`${task.key} unlinked from this worktree`)\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte",
+   "code": "  async function linkTask(task: TrackerTaskLite): Promise<void> {\n    const worktreePath = workspaceState.selectedWorktreePath ?? workspaceState.repoRoot\n    if (!worktreePath || linking || linkedKeys.has(task.key)) return\n    linking = true\n    try {\n      await addActiveTask(worktreePath, {\n        taskKey: task.key,\n        summary: task.summary,\n        connectionId,\n      })\n      await resolvePanelTask(worktreePath, workspaceState.branch)\n    } catch (e) {\n      addToast(ipcErrorMessage(e, 'Failed to link task'))\n      return\n    } finally {\n      linking = false\n    }\n    addToast(`${task.key} linked to this worktree`)\n    workspaceState.rightPanelOpen = true\n    workspaceState.rightPanelTab = 'task'\n    closeDialog()\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "code": "  async function updateTaskBranchPreview(): Promise<void> {\n    if (!selectedTask || taskBranchEdited) return\n    try {\n      const result = await window.api.taskTrackerPrepareBranchFromTask({\n        connectionId: taskModeState.trackerId,\n        task: $state.snapshot(selectedTask) as TrackerTaskLite,\n        repoRoot: trackerRepoRoot,\n      })\n      taskBranchName = result.branchName\n    } catch {\n      taskBranchName = selectedTask.key\n    }\n  }",
+   "label": "violation",
+   "note": "branch name written for a task selection that may have changed"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "code": "  async function checkoutExistingTaskBranch(b: {\n    name: string\n    ref: string\n    remoteOnly: boolean\n  }): Promise<void> {\n    if (!selectedTask || worktreeBranches.has(b.name)) return\n    step = 'creating'\n    try {\n      const baseDir = getPref('worktrees.baseDir', '~/canopy/worktrees')\n      let path = `${baseDir}/${projectName}/${safeDirName(b.name)}`\n      if (path.startsWith('~/')) path = (homedir + path.slice(1)).replace(/\\\\/g, '/')\n      const created = await window.api.worktreeCreate({\n        repoRoot,\n        worktreePath: path,\n        mode: 'existing',\n        branch: b.remoteOnly ? b.ref : b.name,\n        createLocalTracking: b.remoteOnly,\n      })\n      createdPath = created.worktreePath\n      await setActiveTask(created.worktreePath, {\n        taskKey: selectedTask.key,\n        summary: selectedTask.summary,\n        connectionId: taskModeState.trackerId,\n      })\n      if (hasSetupConfig() && workspaceId) {\n        step = 'setup'\n        await runSetup()\n      } else {\n        finishCreation()\n      }\n    } catch (err) {\n      errorMessage = err instanceof Error ? err.message : String(err)\n      step = 'error'\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/lib/stores/taskTracker.svelte.ts",
+   "code": "async function verifyCredentials(\n  trackers: TrackerConfig[],\n  repoRoot?: string,\n  shouldApply: () => boolean = () => true,\n): Promise<void> {\n  verifyCount++\n  try {\n    await Promise.all(\n      trackers\n        .filter((t) => trackerCredentials[t.id]?.hasToken)\n        .map(async (t) => {\n          try {\n            await window.api.trackerConfigGetCurrentUser(repoRoot, t.id)\n            if (!shouldApply()) return\n            const cur = trackerCredentials[t.id]\n            if (cur?.hasToken) trackerCredentials[t.id] = { ...cur, valid: true }\n          } catch (e) {\n            if (!shouldApply()) return\n            const msg = e instanceof Error ? e.message : String(e)\n            const cur = trackerCredentials[t.id]\n            if (AUTH_ERROR_RE.test(msg) && cur?.hasToken) {\n              trackerCredentials[t.id] = { ...cur, valid: false }\n            }\n          }\n        }),\n    )\n  } finally {\n    verifyCount--\n  }\n}",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiActivityModal.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    const mySeq = ++seq\n    refreshing = true\n    try {\n      // The branch goes into the QUERY: TeamCity applies `count:10` before the response\n      // exists, so filtering here instead would blank any branch whose builds are older\n      // than the ten newest in the repository.\n      const result = await window.api.ciActivity(repoRoot, branchFilter)\n      if (mySeq !== seq) return\n      activity = result\n      knownBranches = [\n        ...new Set([\n          ...knownBranches,\n          ...[...result.running, ...result.queued, ...result.recent].flatMap((build) =>\n            build.branchName ? [build.branchName] : [],\n          ),\n        ]),\n      ].sort()\n      now = Date.now()\n      error = ''\n    } catch (e) {\n      if (mySeq !== seq) return\n      error = ipcErrorMessage(e, 'Failed to load activity')\n    } finally {\n      if (mySeq === seq) {\n        loaded = true\n        refreshing = false\n      }\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiActivityModal.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    const mySeq = ++seq\n    refreshing = true\n    try {\n      // The branch goes into the QUERY: TeamCity applies `count:10` before the response\n      // exists, so filtering here instead would blank any branch whose builds are older\n      // than the ten newest in the repository.\n      const result = await window.api.ciActivity(repoRoot, branchFilter)\n      activity = result\n      knownBranches = [\n        ...new Set([\n          ...knownBranches,\n          ...[...result.running, ...result.queued, ...result.recent].flatMap((build) =>\n            build.branchName ? [build.branchName] : [],\n          ),\n        ]),\n      ].sort()\n      now = Date.now()\n      error = ''\n    } catch (e) {\n      error = ipcErrorMessage(e, 'Failed to load activity')\n    } finally {\n      if (mySeq === seq) {\n        loaded = true\n        refreshing = false\n      }\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiActivityModalRouter.svelte",
+   "code": "  async function loadConfig(): Promise<void> {\n    try {\n      const result = await window.api.ciConfig(repoRoot)\n      provider = result.config?.provider ?? ''\n      if (!provider) error = result.invalid?.message ?? 'No CI configured for this repository'\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not load CI configuration')\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/CiRunDialogRouter.svelte",
+   "code": "  async function loadConfig(): Promise<void> {\n    try {\n      const result = await window.api.ciConfig(repoRoot)\n      config = result.config\n      provider = result.config?.provider ?? ''\n      if (!provider) error = result.invalid?.message ?? 'No CI configured for this repository'\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not load CI configuration')\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/GitHubActionsActivityModal.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    const current = ++sequence\n    refreshing = true\n    try {\n      // The branch goes into the QUERY: `recent` is sliced to the ten newest across\n      // every configured workflow before we see it, so filtering here instead would\n      // blank any branch whose last run is older than that.\n      const result = await window.api.ciRunActivity(repoRoot, branchFilter)\n      if (current !== sequence) return\n      activity = result\n      knownBranches = [\n        ...new Set([\n          ...knownBranches,\n          ...[...result.running, ...result.queued, ...result.recent].flatMap((run) =>\n            run.ref?.name ? [run.ref.name] : [],\n          ),\n        ]),\n      ].sort()\n      now = Date.now()\n      error = ''\n    } catch (cause) {\n      if (current !== sequence) return\n      error = ipcErrorMessage(cause, 'Could not load GitHub Actions history')\n    } finally {\n      if (current === sequence) {\n        loaded = true\n        refreshing = false\n      }\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/ci/GitHubActionsActivityModal.svelte",
+   "code": "  async function refresh(): Promise<void> {\n    const current = ++sequence\n    refreshing = true\n    try {\n      // The branch goes into the QUERY: `recent` is sliced to the ten newest across\n      // every configured workflow before we see it, so filtering here instead would\n      // blank any branch whose last run is older than that.\n      const result = await window.api.ciRunActivity(repoRoot, branchFilter)\n      activity = result\n      knownBranches = [\n        ...new Set([\n          ...knownBranches,\n          ...[...result.running, ...result.queued, ...result.recent].flatMap((run) =>\n            run.ref?.name ? [run.ref.name] : [],\n          ),\n        ]),\n      ].sort()\n      now = Date.now()\n      error = ''\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not load GitHub Actions history')\n    } finally {\n      if (current === sequence) {\n        loaded = true\n        refreshing = false\n      }\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiConnectionsPrefs.svelte",
+   "code": "  async function reloadServers(): Promise<void> {\n    try {\n      const all = await window.api.keychainListCredentials()\n      servers = all.filter(\n        (connection) =>\n          connection.provider === 'teamcity' || connection.provider === 'github-actions',\n      )\n    } catch {\n      servers = []\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiConnectionsPrefs.svelte",
+   "code": "  async function testConnection(): Promise<void> {\n    // Mirrors the form's aria-disabled \u2014 which does not stop clicks.\n    if (!urlValid || !trimmedFormToken || testing) return\n    if (!(await confirmDestination())) return\n    testing = true\n    testResult = ''\n    try {\n      await window.api.ciTestNewConnection(normalizedUrl, trimmedFormToken)\n      testResult = 'success'\n    } catch {\n      testResult = 'fail'\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiConnectionsPrefs.svelte",
+   "code": "  async function saveServer(): Promise<void> {\n    if (!urlValid || !trimmedFormToken || savingServer) return\n    savingServer = true\n    try {\n      if (!(await confirmDestination())) return\n      savingBusy = true\n      try {\n        await window.api.keychainSetCredentials('teamcity', normalizedUrl, trimmedFormToken)\n        bumpCiCredentialTick()\n      } catch (e) {\n        addToast(e instanceof Error ? e.message : 'Failed to save credentials')\n        return\n      }\n      editing = null\n      formToken = ''\n      await reloadServers()\n      addToast('CI connection saved')\n    } finally {\n      savingServer = false\n      savingBusy = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiConnectionsPrefs.svelte",
+   "code": "  async function removeServer(server: { provider: string; baseUrl: string }): Promise<void> {\n    if (removingServer) return\n    // Guard set before the await \u2014 that is what blocks a second confirm. The\n    // VISIBLE busy state (removingUrl) waits for the answer: a spinner while the\n    // user is still deciding describes work that has not started, and disabling\n    // the button they just activated would blur it, so Cancel would drop focus.\n    removingServer = true\n    try {\n      const ok = await confirm({\n        title: 'Remove CI connection',\n        message: `Remove your stored token for ${server.provider === 'github-actions' ? 'GitHub Actions' : 'TeamCity'} at ${server.baseUrl}?`,\n        details:\n          'Removes this CI binding on this machine. A credential still bound to another integration is retained; otherwise its secret is deleted.',\n        confirmLabel: 'Remove connection',\n        destructive: true,\n      })\n      if (!ok) return\n      removingUrl = `${server.provider}:${server.baseUrl}`\n      let result: Awaited<ReturnType<typeof window.api.keychainDeleteCredentials>>\n      try {\n        result = await window.api.keychainDeleteCredentials(server.provider, server.baseUrl)\n        bumpCiCredentialTick()\n      } catch (e) {\n        addToast(e instanceof Error ? e.message : 'Failed to remove credentials')\n        return\n      }\n      await reloadServers()\n      addToast(credentialRemovalMessage(result, 'CI connection removed'))\n    } finally {\n      removingServer = false\n      removingUrl = ''\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiCredentialModal.svelte",
+   "code": "  async function openTokenPage(): Promise<void> {\n    if (openingTokenPage) return\n    openingTokenPage = true\n    try {\n      if (config.provider === 'github-actions') {\n        await window.api.openExternal(githubTokenCreationUrl(config.repository))\n        return\n      }\n      const parentRect = containerEl?.getBoundingClientRect()\n      const accepted = await confirm({\n        title: 'Confirm TeamCity address',\n        message: `Open the token page at ${config.baseUrl}?`,\n        details:\n          'This address comes from the repository shared CI configuration. Only continue if you recognize it as your TeamCity server.',\n        confirmLabel: 'Open token page',\n        anchorCenter: parentRect\n          ? {\n              x: parentRect.left + parentRect.width / 2,\n              y: parentRect.top + parentRect.height / 2,\n            }\n          : undefined,\n      })\n      if (accepted) await window.api.openExternal(teamCityTokenCreationUrl(config.baseUrl))\n    } finally {\n      openingTokenPage = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/CiCredentialModal.svelte",
+   "code": "  async function saveToken(): Promise<void> {\n    const candidate = token.trim()\n    if (!candidate || submitting) return\n    submitting = true\n    error = ''\n    try {\n      if (!(await confirmTeamCityDestination())) return\n      saving = true\n      await replaceCiCredential(window.api, repoRoot, config, candidate)\n      bumpCiCredentialTick()\n      await loadCiRepoConfig(repoRoot)\n      token = ''\n      addToast(`${providerName} token updated`, 'success')\n      onUpdated?.()\n      onClose()\n    } catch (cause) {\n      error = ipcErrorMessage(cause, `${providerName} rejected the token`)\n    } finally {\n      saving = false\n      submitting = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/ProjectCiModalRouter.svelte",
+   "code": "  async function loadConfig(): Promise<void> {\n    if (!repoRoot) {\n      loading = false\n      return\n    }\n    try {\n      const result = await window.api.ciConfig(repoRoot)\n      config = result.config\n      credential = result.credential\n      invalid = result.invalid\n      provider = result.config?.provider ?? result.invalid?.provider ?? ''\n      if (result.invalid && !result.invalid.provider) loadError = result.invalid.message\n    } catch (error) {\n      loadError = error instanceof Error ? error.message : 'Could not load CI configuration'\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/githubActionsCiConfiguratorState.svelte.ts",
+   "code": "  async function testConnection(): Promise<void> {\n    const candidateToken = token.trim()\n    if (!repoRoot || !repositoryReady || !candidateToken || testing || loading) return\n    testing = true\n    testResult = ''\n    error = ''\n    try {\n      await window.api.ciTestGitHubConnection(repoRoot, candidateToken)\n      testResult = 'success'\n    } catch (cause) {\n      testResult = 'fail'\n      error = ipcErrorMessage(cause, 'GitHub connection failed')\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/githubActionsCiConfiguratorState.svelte.ts",
+   "code": "  async function ensureToken(): Promise<boolean> {\n    if (!repositoryReady) return false\n    if (hasToken && token.trim().length === 0) return !credentialRejected\n    const candidateToken = token.trim()\n    if (!repoRoot || !candidateToken) return false\n    try {\n      await window.api.ciTestGitHubConnection(repoRoot, candidateToken)\n      await window.api.ciSetGitHubCredential(repoRoot, candidateToken)\n      bumpCiCredentialTick()\n      token = ''\n      hasToken = true\n      credentialRejected = false\n      testResult = 'success'\n      return true\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not store the GitHub token')\n      return false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/githubActionsCiConfiguratorState.svelte.ts",
+   "code": "  async function loadWorkflows(): Promise<void> {\n    if (!repoRoot || loadBlocked) return\n    loading = true\n    error = ''\n    try {\n      if (!(await ensureToken())) {\n        if (!error) error = 'Enter a GitHub token before loading workflows.'\n        loaded = false\n        return\n      }\n      const setup = await window.api.ciGitHubSetup(repoRoot)\n      repository = setup.repository\n      defaultBranch = setup.defaultBranch\n      workflows = setup.workflows\n      loaded = true\n    } catch (cause) {\n      const message = ipcErrorMessage(cause, 'Could not load GitHub workflows')\n      const storedCredential =\n        hasToken && token.trim().length === 0 && credentialUrl\n          ? await window.api\n              .keychainGetCredentials('github-actions', credentialUrl)\n              .catch(() => null)\n          : null\n      credentialRejected = storedCredential?.authenticationState === 'invalid'\n      error = credentialRejected\n        ? ''\n        : hasToken && token.trim().length === 0\n          ? `${message}. Replace the stored token if it cannot access ${repository}.`\n          : message\n      loaded = false\n    } finally {\n      loading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/githubActionsCiConfiguratorState.svelte.ts",
+   "code": "  async function saveConfiguration(): Promise<void> {\n    if (!repoRoot || saveBlocked) return\n    saving = true\n    error = ''\n    try {\n      await window.api.ciSaveConfig(repoRoot, {\n        provider: 'github-actions',\n        baseUrl: 'https://github.com',\n        repository,\n        workflows: selectedWorkflows,\n      })\n      await loadCiRepoConfig(repoRoot)\n      addToast('GitHub Actions configuration saved \u2014 commit .canopy/config.json to share it')\n      closeDialog()\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not save CI configuration')\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/githubActionsCiConfiguratorState.svelte.ts",
+   "code": "  async function removeConfiguration(): Promise<void> {\n    if (!repoRoot || !existingConfig || saving) return\n    const accepted = await confirm({\n      title: 'Remove CI configuration',\n      message: `Remove GitHub Actions (${existingConfig.repository}) from this repository?`,\n      details: 'This removes the shared ci block. Your personal GitHub token remains in Settings.',\n      confirmLabel: 'Remove configuration',\n      destructive: true,\n    })\n    if (!accepted) return\n    saving = true\n    try {\n      await window.api.ciSaveConfig(repoRoot, null)\n      await loadCiRepoConfig(repoRoot)\n      addToast('CI configuration removed')\n      closeDialog()\n    } catch (cause) {\n      error = ipcErrorMessage(cause, 'Could not remove CI configuration')\n    } finally {\n      saving = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/projectCiModalState.svelte.ts",
+   "code": "  async function testConnection(): Promise<void> {\n    // Mirrors the button's aria-disabled \u2014 which does not stop clicks.\n    if (!urlValid || !trimmedFormToken || testing || typesLoading) return\n    const destinationUrl = effectiveUrl\n    const token = trimmedFormToken\n    testing = true\n    testResult = ''\n    try {\n      if (!(await confirmDestination(destinationUrl))) return\n      await window.api.ciTestNewConnection(destinationUrl, token)\n      if (effectiveUrl === destinationUrl && trimmedFormToken === token) testResult = 'success'\n    } catch {\n      if (effectiveUrl === destinationUrl && trimmedFormToken === token) testResult = 'fail'\n    } finally {\n      testing = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/projectCiModalState.svelte.ts",
+   "code": "  async function ensureToken(destinationUrl: string, token: string): Promise<boolean> {\n    if (serverHasToken && !token) return true\n    if (!token) return false\n    if (!(await confirmDestination(destinationUrl))) return false\n    try {\n      await window.api.keychainSetCredentials('teamcity', destinationUrl, token)\n      bumpCiCredentialTick()\n    } catch (e) {\n      // In-modal per the scrim rule \u2014 a toast would paint under this dialog. The\n      // caller (Load available jobs) surfaces typesError right next to its button.\n      if (effectiveUrl === destinationUrl && trimmedFormToken === token) {\n        typesError = ipcErrorMessage(e, 'Failed to save credentials')\n      }\n      return false\n    }\n    servers = [\n      ...servers.filter((server) => server.baseUrl !== destinationUrl),\n      { baseUrl: destinationUrl, authenticationState: 'valid' },\n    ]\n    const formStillCurrent = effectiveUrl === destinationUrl && trimmedFormToken === token\n    if (selectedServer === NEW_SERVER && formStillCurrent) {\n      selectedServer = destinationUrl\n    }\n    if (formStillCurrent) formToken = ''\n    return formStillCurrent\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/projectCiModalState.svelte.ts",
+   "code": "  async function saveConfiguration(): Promise<void> {\n    // Mirrors the button's aria-disabled: the cap and the file-scope block are\n    // real preconditions, and aria-disabled does not stop a click.\n    if (!repoRoot || saveBlocked) return\n    // No confirm on this path \u2014 the guard and the visible state start together.\n    saving = true\n    busy = 'save'\n    saveError = ''\n    try {\n      await window.api.ciSaveConfig(repoRoot, {\n        baseUrl: effectiveUrl,\n        // Labels stay from `selected`: they are the user's own editable sidebar\n        // labels, not mirrors of the server name.\n        buildTypes: effectiveBuildTypes,\n      })\n      await loadCiRepoConfig(repoRoot)\n      addToast('CI configuration saved - commit .canopy/config.json to share it')\n      closeDialog()\n    } catch (e) {\n      saveError = ipcErrorMessage(e, 'Failed to save CI configuration')\n    } finally {\n      saving = false\n      busy = ''\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/preferences/projectCiModalState.svelte.ts",
+   "code": "  async function removeConfiguration(): Promise<void> {\n    if (!repoRoot || !existingConfig || saving) return\n    // The SHARED `saving` guard, set before the confirm: it blocks a second\n    // confirm from a double-click AND takes Save out of the enabled set, so two\n    // read-modify-write passes over the git-shared .canopy/config.json cannot\n    // overlap from this dialog (the main process serializes them per repo too).\n    // The VISIBLE busy state waits for the answer \u2014 a \"Saving\u2026\" label while the\n    // user is still deciding describes work that has not started, and disabling\n    // the activated button would blur it, dropping Cancel's focus restore.\n    saving = true\n    // Clear a previous SAVE failure before the confirm \u2014 declining it must not\n    // leave that stale message sitting under the Remove button.\n    saveError = ''\n    try {\n      const ok = await confirm({\n        title: 'Remove CI configuration',\n        message: `Remove the TeamCity configuration (${existingConfig.baseUrl}) from this repository?`,\n        details:\n          'Removes the ci block from the git-tracked .canopy/config.json - after committing, the whole team loses the CI rows. Your stored token stays (Settings > CI connections).',\n        confirmLabel: 'Remove configuration',\n        destructive: true,\n      })\n      if (!ok) return\n      busy = 'remove'\n      await window.api.ciSaveConfig(repoRoot, null)\n      await loadCiRepoConfig(repoRoot)\n      addToast('CI configuration removed')\n      closeDialog()\n    } catch (e) {\n      saveError = ipcErrorMessage(e, 'Failed to remove CI configuration')\n    } finally {\n      saving = false\n      busy = ''\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  async function refreshActivity(root: string): Promise<void> {\n    const seq = ++activitySeq\n    try {\n      const result =\n        config?.provider === 'github-actions'\n          ? await window.api.ciRunActivity(root)\n          : await window.api.ciActivity(root)\n      if (seq !== activitySeq) return\n      activity = result\n      activityError = ''\n      const hasPartial = 'partialErrors' in result && (result.partialErrors?.length ?? 0) > 0\n      if (!hasPartial) {\n        identicalPartialCount = 0\n      } else {\n        identicalPartialCount += 1\n      }\n    } catch (e) {\n      if (seq !== activitySeq) return\n      activity = null\n      activityError = ipcErrorMessage(e, 'Failed to load activity')\n    } finally {\n      if (seq === activitySeq) activityLoaded = true\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/sidebar/ciSectionState.svelte.ts",
+   "code": "  async function refreshActivity(root: string): Promise<void> {\n    const seq = ++activitySeq\n    try {\n      const result =\n        config?.provider === 'github-actions'\n          ? await window.api.ciRunActivity(root)\n          : await window.api.ciActivity(root)\n      activity = result\n      activityError = ''\n      const hasPartial = 'partialErrors' in result && (result.partialErrors?.length ?? 0) > 0\n      if (!hasPartial) {\n        identicalPartialCount = 0\n      } else {\n        identicalPartialCount += 1\n      }\n    } catch (e) {\n      activity = null\n      activityError = ipcErrorMessage(e, 'Failed to load activity')\n    } finally {\n      activityLoaded = true\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  async function loadRefs(): Promise<void> {\n    if (!jobId) return\n    const sequence = ++refsSequence\n    const requestedJobId = jobId\n    refsLoading = true\n    exactRefLoading = false\n    refsError = ''\n    try {\n      if (config.provider === 'teamcity') {\n        const branches = await window.api.ciBranches(repoRoot, requestedJobId)\n        if (sequence !== refsSequence || requestedJobId !== jobId) return\n        refs = branches.map((name) => ({ name, kind: 'branch' }))\n        // Never replace a worktree preselect with TeamCity's first/default branch.\n      } else {\n        const loadedRefs = await window.api.ciJobRefs(repoRoot, requestedJobId)\n        if (sequence !== refsSequence || requestedJobId !== jobId) return\n        refs = loadedRefs\n        const ambiguousNames = ambiguousCiRefNames(loadedRefs)\n        const availableRefs = loadedRefs.filter((ref) => !ambiguousNames.includes(ref.name))\n        const existing = selectedRefName\n          ? availableRefs.find((ref) => ref.name === selectedRefName)\n          : undefined\n        const worktreeRef = initialBranch\n          ? availableRefs.find((ref) => ref.kind === 'branch' && ref.name === initialBranch)\n          : undefined\n        selectedRefName = existing?.name ?? worktreeRef?.name ?? ''\n        refQuery = selectedRefName || initialBranch || ''\n      }\n    } catch (cause) {\n      if (sequence !== refsSequence || requestedJobId !== jobId) return\n      refs = []\n      refsError = ipcErrorMessage(\n        cause,\n        isTeamCity ? 'Failed to load branches' : 'Could not load GitHub refs',\n      )\n    } finally {\n      if (sequence === refsSequence) refsLoading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  async function loadRefs(): Promise<void> {\n    if (!jobId) return\n    const sequence = ++refsSequence\n    const requestedJobId = jobId\n    refsLoading = true\n    exactRefLoading = false\n    refsError = ''\n    try {\n      if (config.provider === 'teamcity') {\n        const branches = await window.api.ciBranches(repoRoot, requestedJobId)\n        refs = branches.map((name) => ({ name, kind: 'branch' }))\n        // Never replace a worktree preselect with TeamCity's first/default branch.\n      } else {\n        const loadedRefs = await window.api.ciJobRefs(repoRoot, requestedJobId)\n        refs = loadedRefs\n        const ambiguousNames = ambiguousCiRefNames(loadedRefs)\n        const availableRefs = loadedRefs.filter((ref) => !ambiguousNames.includes(ref.name))\n        const existing = selectedRefName\n          ? availableRefs.find((ref) => ref.name === selectedRefName)\n          : undefined\n        const worktreeRef = initialBranch\n          ? availableRefs.find((ref) => ref.kind === 'branch' && ref.name === initialBranch)\n          : undefined\n        selectedRefName = existing?.name ?? worktreeRef?.name ?? ''\n        refQuery = selectedRefName || initialBranch || ''\n      }\n    } catch (cause) {\n      refs = []\n      refsError = ipcErrorMessage(\n        cause,\n        isTeamCity ? 'Failed to load branches' : 'Could not load GitHub refs',\n      )\n    } finally {\n      if (sequence === refsSequence) refsLoading = false\n    }\n  }",
+   "label": "violation",
+   "note": "staleness check removed",
+   "synthetic": "staleness guard removed"
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/runDialogState.svelte.ts",
+   "code": "  async function resolveExactRef(name: string): Promise<boolean> {\n    if (config.provider !== 'github-actions' || !jobId || exactRefLoading) return false\n    const sequence = ++refsSequence\n    const requestedJobId = jobId\n    const requestedQuery = name.trim()\n    exactRefLoading = true\n    refsLoading = false\n    refsError = ''\n    try {\n      const resolved = await window.api.ciExactJobRef(repoRoot, requestedJobId, requestedQuery)\n      if (\n        sequence !== refsSequence ||\n        requestedJobId !== jobId ||\n        refQuery.trim() !== requestedQuery\n      ) {\n        return false\n      }\n      refs = [...refs.filter((ref) => ref.name !== resolved.name), resolved]\n      selectedRefName = resolved.name\n      refQuery = resolved.name\n      loadedGitHubParametersFor = `${requestedJobId}\\^@${resolved.name}`\n      await loadParameters()\n      return true\n    } catch (cause) {\n      if (\n        sequence !== refsSequence ||\n        requestedJobId !== jobId ||\n        refQuery.trim() !== requestedQuery\n      ) {\n        return false\n      }\n      refsError = ipcErrorMessage(cause, 'Could not resolve the GitHub ref')\n      return false\n    } finally {\n      if (sequence === refsSequence) exactRefLoading = false\n    }\n  }",
+   "label": "clean",
+   "note": "guarded, keyed by its input, fixed inputs, or only busy flags and messages after the await"
+  }
+ ]
+}

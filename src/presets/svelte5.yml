@@ -1,0 +1,62 @@
+# Svelte 5 runes.
+vars:
+  svelte_paths: ["**/*.svelte", "**/*.svelte.ts"]
+  svelte_component_paths: ["**/*.svelte"]
+  max_component_lines: "300"
+  # Optional: calls that only read state, so an effect made of them is still a derivation.
+  # pure_reads: "Calls to get*() store getters only read state."
+
+rules:
+  - id: svelte.effect-without-cleanup
+    description: $effect starts a listener, timer, subscription or observer without returning a cleanup
+    type: noul
+    severity: major
+    paths: ["{{vars.svelte_paths}}"]
+    instructions: >-
+      Is there an added Svelte `$effect(() => { ... })` block in `changes.lines` whose body
+      starts something that keeps running (addEventListener, setInterval, setTimeout, a
+      subscribe or on* subscription, or a ResizeObserver, IntersectionObserver or
+      MutationObserver), and whose body does not return a function that removes, clears,
+      unsubscribes or disconnects it?
+    criteria:
+      true: Inside the $effect body a listener, timer, subscription or observer is created and the effect has no return statement that undoes it.
+      false: >-
+        No $effect is added, the $effect only reads or assigns state, or it returns a cleanup:
+        a function (return () => ...), a variable holding the unsubscribe function
+        (return unsub), or the result of the subscribe call itself
+        (return window.api.onSomething(...), which returns its unsubscribe function).
+        Timers and listeners outside $effect do not count.
+  - id: svelte.legacy-export-let
+    description: Legacy `export let` prop; use $props() with an interface
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.svelte_component_paths}}"]
+    regex: '^\s*export let\s'
+  - id: svelte.component-size
+    description: Component longer than {{vars.max_component_lines}} lines; split it
+    type: file_lines
+    severity: minor
+    paths: ["{{vars.svelte_component_paths}}"]
+    max_lines: "{{vars.max_component_lines}}"
+  - id: svelte.effect-as-derived
+    description: $effect only derives a value from other state; use $derived
+    type: noul
+    severity: minor
+    paths: ["{{vars.svelte_paths}}"]
+    instructions: >-
+      Is there an added Svelte `$effect(() => { ... })` block in `changes.lines` whose body only
+      computes values from reactive state and assigns them to local variables, with no other
+      effect (no DOM access, no API, store or network call, no events, no timers, no async
+      work)? Such a value should be declared with $derived instead.
+    criteria:
+      true: >-
+        For example $effect(() => { count = items.length }) or
+        $effect(() => { visible = list.filter((x) => x.open) }).
+        {{vars.pure_reads?}}
+      false: >-
+        No $effect is added, or the effect does something besides computing local values: it
+        touches the DOM or focus, calls an API, a store method or a function that loads data,
+        dispatches an event, writes to shared state outside the component, runs async code,
+        starts a timer, or initializes state once behind a guard flag.

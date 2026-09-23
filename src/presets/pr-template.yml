@@ -1,0 +1,84 @@
+# A PR template with What and Why sections and a checklist. Section presence is checked in
+# code; Jev only judges the text of sections that exist.
+vars:
+  what_heading: what
+  why_heading: why
+  user_facing_prefix: feat
+  infra_prefix: chore
+
+rules:
+  - id: template.what-section
+    description: '"{{vars.what_heading}}" section missing or left as the template comment'
+    type: pattern
+    field: section:{{vars.what_heading}}
+    regex: '\S'
+    severity: major
+  - id: template.why-section
+    description: '"{{vars.why_heading}}" section missing or left as the template comment'
+    type: pattern
+    field: section:{{vars.why_heading}}
+    regex: '\S'
+    severity: major
+  - id: template.checklist
+    description: Template checklist removed
+    type: pattern
+    field: description
+    regex: '^\s*[-*] \[[ xX]\]'
+    flags: m
+    severity: minor
+
+  - id: template.what-concrete
+    description: '"{{vars.what_heading}}" does not say what the change does'
+    type: noul
+    scope: pr
+    locate: false
+    severity: major
+    fires_on: "no"
+    when: { sections_filled: ["{{vars.what_heading}}"] }
+    instructions: >-
+      Does `pr.description_sections.{{vars.what_heading}}` say concretely what this pull
+      request changes, such as which feature, component or behavior is added, changed or removed?
+    criteria:
+      true: >-
+        Names the change, for example "Adds a tab strip above split terminal panes" or
+        "Serializes token refresh calls with a mutex".
+      false: >-
+        Placeholder or vague text such as "TBD", "-", "see title", "various fixes",
+        "improvements", or only a ticket link.
+  - id: template.why-reason
+    description: '"{{vars.why_heading}}" does not explain the reason for the change'
+    type: noul
+    scope: pr
+    locate: false
+    severity: major
+    fires_on: "no"
+    when: { sections_filled: ["{{vars.why_heading}}"] }
+    instructions: >-
+      Does `pr.description_sections.{{vars.why_heading}}` explain why this change is needed,
+      such as the problem, bug, user need or maintenance reason it addresses?
+    criteria:
+      true: >-
+        Names a reason, for example "Two tabs refreshing at once logged users out" or "The
+        class had grown to 900 lines and was hard to change safely".
+      false: >-
+        Restates what changed without a reason, is a placeholder such as "TBD" or "-", or
+        only links an issue.
+  - id: template.user-impact
+    description: '{{vars.user_facing_prefix}} PR: "{{vars.why_heading}}" does not say who benefits and how'
+    type: noul
+    scope: pr
+    locate: false
+    severity: major
+    fires_on: "no"
+    when: { title_matches: "^{{vars.user_facing_prefix}}", sections_filled: ["{{vars.why_heading}}"] }
+    instructions: >-
+      Does `pr.description_sections.{{vars.why_heading}}` describe the impact on users of the
+      app: who benefits and how their work gets easier, faster or safer?
+    criteria:
+      true: >-
+        Names users of the app or a user situation and the benefit, for example "Developers
+        running several agents can see which pane is busy without switching tabs".
+      false: >-
+        Only technical or internal reasons, such as refactoring, code structure, dependency
+        updates, or benefits to the team's CI, tests or tooling, with no effect on app users
+        described. Such changes should use the {{vars.infra_prefix}} prefix.

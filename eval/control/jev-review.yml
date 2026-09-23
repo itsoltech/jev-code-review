@@ -1,0 +1,23 @@
+# Control project for the presets: same rules, different conventions than canopy-desktop.
+# Rows in eval/datasets/control.jsonl flip their answer when these vars change.
+extends: [jev:conventional-title, jev:result-errors, jev:electron, jev:svelte5, jev:async-state]
+model: jev-1.13.0
+vars:
+  title_prefixes: [feature, bugfix, ops, docs]
+  user_facing_prefixes: [feature, bugfix]
+  infra_prefix: ops
+  infra_paths: [".github/**", "package.json", "package-lock.json"]
+  result_paths: ["server/**/*.ts"]
+  result_scope: server
+  result_type: a Result from the result package
+  error_constructor: Result.err()
+  external_call_wrapper: Result.fromPromise()
+  allowed_try_catch:
+    - parsing text with JSON.parse or new URL
+    - closing sockets, files or servers during shutdown
+  main_paths: ["app/backend/**"]
+  renderer_paths: ["app/ui/**"]
+  preload_paths: ["app/bridge/**"]
+  input_validators: [assertSafePath(), a zod schema .parse() call]
+  svelte_paths: ["web/**/*.svelte", "web/**/*.svelte.ts"]
+  ui_state_paths: ["web/**"]

@@ -1,0 +1,23 @@
+rules:
+  - id: style.naming
+    description: Unclear or misleading names in added code
+    type: score
+    severity: minor
+    instructions: How clear are the names of variables, functions and types introduced in the added lines (marked "+") of `changes.lines`?
+    criteria:
+      - Names are clear and describe what they hold or do, or no names are introduced.
+      - Mostly clear; one name is vague.
+      - Several names are vague abbreviations or generic words like data, tmp, obj, doStuff.
+      - Names are misleading and describe something different from what the code does.
+    direction: higher_is_worse
+    threshold: 0.66
+dimensions:
+  - id: readability
+    description: Readability of added code
+    weight: 1
+    instructions: How easy is it to read and understand the added lines (marked "+") of `changes.lines`?
+    criteria:
+      - Very hard to follow; deeply nested, cryptic or dense.
+      - Hard to follow in places.
+      - Readable with minor effort.
+      - Clear and straightforward.

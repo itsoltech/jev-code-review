@@ -1,0 +1,40 @@
+# Behavior docs must change together with user-visible behavior.
+vars:
+  source_paths: ["src/**"]
+  docs_paths: ["docs/**"]
+  error_type_paths: ["**/errors.ts"]
+
+rules:
+  - id: docs.behavior-change-without-docs
+    description: User-visible behavior changed without a docs update
+    type: noul
+    scope: pr
+    locate: false
+    severity: minor
+    when: { files_changed: ["{{vars.source_paths}}"], files_unchanged: ["{{vars.docs_paths}}"] }
+    instructions: >-
+      Using `pr` and `files`, does this pull request change user-visible behavior of the app,
+      such as new or changed UI, workflows, defaults, settings, keyboard shortcuts or error
+      messages? `stats` and `files` list what changed; no documentation file
+      ({{vars.docs_paths}}) was changed.
+    criteria:
+      true: The title or description describes a new feature or changed behavior users will notice.
+      false: Internal refactor, tests, build or CI changes, dependency updates, or a fix that restores documented behavior.
+  - id: docs.new-ipc-without-docs
+    description: New IPC handler without a docs update
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.source_paths}}"]
+    regex: '\bipcMain\.handle\(\s*[''"]'
+    when: { files_unchanged: ["{{vars.docs_paths}}"] }
+  - id: docs.new-error-variant-without-docs
+    description: New error variant without a docs update
+    type: pattern
+    field: added_lines
+    fires_when: match
+    severity: minor
+    paths: ["{{vars.error_type_paths}}"]
+    regex: '_tag:\s*[''"][A-Z]'
+    when: { files_unchanged: ["{{vars.docs_paths}}"] }

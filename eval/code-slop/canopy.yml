@@ -1,0 +1,17 @@
+# code-slop on canopy-desktop PRs, with the project's conventions as context for Jev.
+extends: ["jev:code-slop"]
+model: jev-1.13.0
+vars:
+  slop_paths: ["src/**/*.ts", "src/**/*.svelte"]
+  slop_test_paths: ["src/**/*.test.ts", "e2e/**"]
+context:
+  max_hunk_lines: 80
+  project_notes: >-
+    Electron + Svelte 5 desktop app. Main-process business logic returns neverthrow Result /
+    ResultAsync values; try/catch is allowed only at process boundaries. IPC handlers receive
+    untrusted renderer input. Functions that return an empty list or null after a failed
+    optional lookup (GitHub PRs, tracker metadata, CI status) are best-effort UI data unless
+    they say otherwise.
+files:
+  exclude: ["**/package-lock.json", "out/**", "dist/**", "CHANGELOG.md", "docs/**"]
+budget: { max_hunks: 200 }

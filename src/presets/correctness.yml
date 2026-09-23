@@ -1,0 +1,40 @@
+rules:
+  - id: corr.swallowed-error
+    description: Error caught and silently ignored
+    type: noul
+    severity: major
+    instructions: >-
+      Do the added lines (marked "+") in `changes.lines` add an error handler (catch, except,
+      rescue, recover or an error callback) whose body neither logs, rethrows, returns an error
+      nor handles the error in any way?
+    criteria:
+      true: An added handler is empty or only contains a comment or pass.
+      false: Every added handler logs, rethrows, returns, converts or otherwise handles the error, or no handler is added.
+  - id: corr.debug-leftover
+    description: Debugging code left in the change
+    type: noul
+    severity: minor
+    paths: ["**/*"]
+    exclude_paths: ["**/*.md", "**/test/**", "**/tests/**", "**/*.test.*", "**/*.spec.*", "scripts/**"]
+    instructions: >-
+      Do the added lines (marked "+") in `changes.lines` contain temporary debugging code, such
+      as console.log or print calls with debug text, debugger statements, dbg!, var_dump or
+      breakpoints?
+    criteria:
+      true: An added line looks like temporary debugging output or a breakpoint.
+      false: Output goes through the project's logger or is intended program output, or there is none.
+  - id: corr.floating-promise
+    description: Promise-returning call not awaited or handled
+    type: noul
+    severity: major
+    paths: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mjs", "**/*.cjs"]
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` call an async function or a function
+      that returns a Promise without await, return, .then/.catch, void or storing the result?
+  - id: corr.todo-added
+    description: New TODO or FIXME left in code
+    type: noul
+    severity: info
+    instructions: >-
+      Does any added line (marked "+") in `changes.lines` contain a TODO, FIXME, HACK or XXX
+      comment?
