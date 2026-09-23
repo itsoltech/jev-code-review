@@ -36,8 +36,15 @@ rules:
       Does any added line (marked "+") in `changes.lines` run a shell or system command whose
       command string is built by concatenating or interpolating a variable?
     criteria:
-      true: A variable is placed into a command string passed to exec, system, spawn with shell=true, subprocess with shell=True, backticks or similar.
-      false: No commands are run, or arguments are passed as a separate array without a shell.
+      true: >-
+        A variable is placed into a command string passed to exec, system, spawn with
+        shell=true, subprocess with shell=True, backticks or similar, or a GitHub Actions
+        expression such as ${{ github.event.pull_request.title }} is written directly inside a
+        `run:` script.
+      false: >-
+        No commands are run, arguments are passed as a separate array without a shell (execFile,
+        spawn without shell), or a shell script reads a value from an environment variable in
+        double quotes ("$TAG", "${major}"), for example a workflow `env:` value used in `run:`.
   - id: sec.unsafe-html
     description: Unescaped HTML rendering of dynamic data
     type: noul

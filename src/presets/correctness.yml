@@ -30,7 +30,16 @@ rules:
     paths: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mjs", "**/*.cjs"]
     instructions: >-
       Does any added line (marked "+") in `changes.lines` call an async function or a function
-      that returns a Promise without await, return, .then/.catch, void or storing the result?
+      that returns a Promise as a bare statement, with nothing in front of the call and nothing
+      chained after it?
+    criteria:
+      true: >-
+        An added statement such as `gh.createComment(body);` or `fs.writeFile(path, data);`
+        (fs.promises) starts with the call itself, so its Promise is dropped.
+      false: >-
+        Every such call is preceded by await, return or void, is assigned or passed to a
+        variable, array or Promise.all, or is followed by .then or .catch. A line that begins
+        with await never counts, and neither do synchronous calls.
   - id: corr.todo-added
     description: New TODO or FIXME left in code
     type: noul
