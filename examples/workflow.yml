@@ -20,9 +20,9 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: your-org/jev-code-review@v1
+      - uses: itsoltech/jev-code-review@v1
         with:
           typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}
           # allow-fork-prs: true   # sends fork code to TypeSafe and lets forks trigger paid runs

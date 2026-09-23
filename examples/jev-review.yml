@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/your-org/jev-code-review/v1/schema/jev-review.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/itsoltech/jev-code-review/v1/schema/jev-review.schema.json
 # .github/jev-review.yml  (read from the PR base commit)
 extends: ["jev:recommended", "jev:style"]
 

@@ -30,7 +30,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-org/jev-code-review@v1
+      - uses: itsoltech/jev-code-review@v1
         with:
           typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}
 ```
@@ -42,7 +42,7 @@ Without a config file the action uses `jev:recommended`. To block merges, mark t
 Put the config at `.github/jev-review.yml`. Add the schema comment on the first line for autocomplete and validation in editors with the YAML language server:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/your-org/jev-code-review/v1/schema/jev-review.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/itsoltech/jev-code-review/v1/schema/jev-review.schema.json
 extends: ["jev:recommended"]
 model: jev-1.13.0
 rules:
