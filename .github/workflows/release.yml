@@ -4,12 +4,11 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
-
 jobs:
   move-major-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Point the major tag (v1) at this release
@@ -19,3 +18,37 @@ jobs:
           major="${TAG%%.*}"
           git tag -f "$major" "$TAG"
           git push origin "refs/tags/$major" --force
+
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # npm trusted publishing (OIDC); no npm token is stored in the repository.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+      - name: package.json version matches the release tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          [ "$version" = "$TAG" ] || { echo "::error::package.json is $version, release is $TAG"; exit 1; }
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Publish unless this version is already on npm
+        run: |
+          name="$(node -p 'require("./package.json").name')"
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "$name@$version" version > /dev/null 2>&1; then
+            echo "$name@$version is already published; skipping."
+          else
+            npm publish
+          fi

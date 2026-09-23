@@ -28,3 +28,7 @@ jobs:
             echo "::error::dist/ or schema/ is stale. Run 'npm run all' and commit the result."
             exit 1
           }
+      - name: CLI package
+        run: |
+          node dist/cli.js --help > /dev/null
+          npm pack --dry-run

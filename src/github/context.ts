@@ -3,7 +3,8 @@ import type { PrInfo } from "../types.js";
 
 type Context = typeof ghContext;
 
-interface PullPayload {
+/** The pull request fields the review needs, as in the event payload and the pulls.get response. */
+export interface PullPayload {
   number: number;
   title?: string;
   body?: string | null;
@@ -17,7 +18,10 @@ interface PullPayload {
 /** Read PR details from the event payload; undefined when the event is not about a pull request. */
 export function prFromContext(context: Context): PrInfo | undefined {
   const pull = context.payload.pull_request as PullPayload | undefined;
-  if (!pull) return undefined;
+  return pull ? prFromPull(pull) : undefined;
+}
+
+export function prFromPull(pull: PullPayload): PrInfo {
   return {
     number: pull.number,
     title: pull.title ?? "",

@@ -1,6 +1,6 @@
 # Jev code review
 
-A GitHub Action that reviews pull requests with [TypeSafe Jev](https://docs.typesafe.ai). Review rules, thresholds and the verdict policy are defined in a YAML file in each repository.
+A GitHub Action and a CLI that review pull requests with [TypeSafe Jev](https://docs.typesafe.ai). Review rules, thresholds and the verdict policy are defined in a YAML file in each repository.
 
 Jev is a System One model: it does not write text, it returns typed judgments with probabilities (a yes/no probability, a choice between options, or a score on a rubric). This action uses that split deliberately. Each rule in the config is one narrow question. Jev answers it for every changed hunk, code turns the probabilities into findings, and the verdict (approve, comment, request changes, fail the check) is decided by the policy in the config. Comment text comes from templates, so nothing in a comment is generated from the diff.
 
@@ -36,6 +36,23 @@ jobs:
 ```
 
 Without a config file the action uses `jev:recommended`. To block merges, mark the job as a required status check in branch protection.
+
+## CLI
+
+The same review runs outside GitHub Actions with the npm package [`@itsoltech/jev-code-review`](https://www.npmjs.com/package/@itsoltech/jev-code-review) (Node 20+ or Bun). It reads `TYPESAFE_API_KEY` from the environment or from `.env` in the current directory.
+
+```sh
+npx @itsoltech/jev-code-review                  # this branch against origin's default branch
+bunx @itsoltech/jev-code-review --base develop   # against another branch
+npx @itsoltech/jev-code-review --staged          # staged changes, for a pre-commit hook
+git diff main... | npx @itsoltech/jev-code-review --diff - --title "Add search"
+npx @itsoltech/jev-code-review --pr 342          # a GitHub pull request, read-only
+npx @itsoltech/jev-code-review --pr 342 --post   # and publish the review like the action
+```
+
+A local change is the working tree (committed and uncommitted changes, without untracked files) against the merge base with `--base`. The pull request title is the oldest commit subject and the description is the commit messages, unless `--title` and `--body-file` are given. The config is `.github/jev-review.yml` from the working tree, or `--config <path>`; with `--pr` it is read from the base commit, as in the action, unless `--config` is given. `--pr` needs `GITHUB_TOKEN`, `GH_TOKEN` or a `gh auth login`, and uses the `origin` remote unless `--repo owner/name` is given. Nothing is written to GitHub without `--post`.
+
+`--format` is `text` (default), `markdown` (the summary comment), `json` or `sarif` (for `github/codeql-action/upload-sarif` and editors); `--output <file>` writes it to a file. The exit code is 0 when the review passes, 1 when `policy.fail_check` fails it (or a request fails with `policy.on_error: fail`), and 2 for usage, config or setup errors. Run `npx @itsoltech/jev-code-review --help` for all options.
 
 ## Configuration
 
@@ -168,14 +185,13 @@ TYPESAFE_API_KEY=... npm run calibrate -- --data eval/datasets/sample.jsonl --co
 
 Each JSONL row holds either a `path` and a `patch`, or a `pr` with `title` and `body` for PR-scope rules, plus labels such as `{"sec.sql-concat": {"violates": true, "line": 12}}` where `violates` means the rule should fire (`line_range: [first, last]` accepts any line of a block-level finding). `eval/datasets/pr-description.jsonl` with `--config eval/configs/pr-description.yml` calibrates the PR description preset. The report gives precision and recall at the current threshold, the rows each rule got wrong, a suggested threshold that maximizes F0.5, location accuracy, and a YAML patch. `eval/datasets/sample.jsonl` is a small starter set; aim for at least 30 labeled hunks per rule, including negatives that look similar to the positives. Re-run calibration whenever the pinned model version changes.
 
-To try a config on a local change or an existing pull request without posting anything:
+To try a config on a local change or an existing pull request without posting anything, use the [CLI](#cli), or `npm run review-local` to run it from source:
 
 ```sh
-git diff main... | npm run review-local -- --config .github/jev-review.yml --title "My change"
+npm run review-local -- --base main --config .github/jev-review.yml
 npm run review-local -- --pr 342 --repo itsoltech/canopy-desktop --config examples/canopy/jev-review.yml
 ```
-
-Both scripts read `TYPESAFE_API_KEY` from `.env` when present. `npm run scan-patterns -- --files <pr_files.json> --config <config>` runs the regex rules over saved PR diffs without Jev and prints how often each fires, to review a pattern before enabling it. [examples/canopy/jev-review.yml](examples/canopy/jev-review.yml) is a complete config for itsoltech/canopy-desktop, and [eval/canopy/README.md](eval/canopy/README.md) describes how it was built and measured from that repository's review history.
+ `npm run scan-patterns -- --files <pr_files.json> --config <config>` runs the regex rules over saved PR diffs without Jev and prints how often each fires, to review a pattern before enabling it. [examples/canopy/jev-review.yml](examples/canopy/jev-review.yml) is a complete config for itsoltech/canopy-desktop, and [eval/canopy/README.md](eval/canopy/README.md) describes how it was built and measured from that repository's review history.
 
 ## Development
 
@@ -185,6 +201,6 @@ npm run typecheck && npm test
 npm run all      # typecheck, tests, schema and dist bundle
 ```
 
-`dist/index.js` and `schema/jev-review.schema.json` are committed; CI fails when they are stale. The pipeline is split into pure modules (`diff/`, `config/`, `jev/`, `policy/`, `report/`) and two ports (`GitHubPort`, `JevPort`), so tests run the full pipeline with an in-memory GitHub and the real TypeSafe SDK over a fake `fetch`. Uncertain findings pass through an `Escalator` interface ([src/escalation/types.ts](src/escalation/types.ts)) before the verdict; v1 ships a no-op, and a later version can send them to a reasoning model or a human queue.
+`dist/index.js` (the action), `dist/cli.js` (the npm CLI) and `schema/jev-review.schema.json` are committed; CI fails when they are stale. The pipeline is split into pure modules (`diff/`, `config/`, `jev/`, `policy/`, `report/`) and two ports (`GitHubPort`, `JevPort`), so tests run the full pipeline with an in-memory GitHub and the real TypeSafe SDK over a fake `fetch`. Uncertain findings pass through an `Escalator` interface ([src/escalation/types.ts](src/escalation/types.ts)) before the verdict; v1 ships a no-op, and a later version can send them to a reasoning model or a human queue.
 
-Releases: publish a GitHub release `v1.x.y`; the release workflow moves the `v1` tag.
+Releases: set `version` in package.json, then publish a GitHub release `v1.x.y` with the same version. The release workflow moves the `v1` tag and publishes the npm package through npm trusted publishing (OIDC, no token in the repository).

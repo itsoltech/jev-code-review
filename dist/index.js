@@ -33532,7 +33532,9 @@ function getOctokit(token, options, ...additionalPlugins) {
 // src/github/context.ts
 function prFromContext(context3) {
   const pull = context3.payload.pull_request;
-  if (!pull) return void 0;
+  return pull ? prFromPull(pull) : void 0;
+}
+function prFromPull(pull) {
   return {
     number: pull.number,
     title: pull.title ?? "",

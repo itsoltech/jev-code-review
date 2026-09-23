@@ -1,7 +1,36 @@
 {
-  "name": "jev-code-review",
+  "name": "@itsoltech/jev-code-review",
   "version": "1.0.1",
-  "description": "Configurable pull request review GitHub Action powered by TypeSafe Jev",
+  "description": "Configurable pull request review powered by TypeSafe Jev: GitHub Action and CLI",
+  "keywords": [
+    "code-review",
+    "pull-request",
+    "github-action",
+    "typesafe",
+    "jev",
+    "cli"
+  ],
+  "homepage": "https://github.com/itsoltech/jev-code-review#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsoltech/jev-code-review.git"
+  },
+  "bugs": "https://github.com/itsoltech/jev-code-review/issues",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "jev-review": "dist/cli.js"
+  },
+  "files": [
+    "dist/cli.js",
+    "schema"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "vitest run",
@@ -12,26 +41,18 @@
     "review-local": "node --env-file-if-exists=.env scripts/run-ts.mjs scripts/review-local.ts",
     "scan-patterns": "node scripts/run-ts.mjs scripts/scan-patterns.ts"
   },
-  "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
-    "@typesafe-ai/sdk": "^0.6.0",
-    "p-limit": "^7.3.3",
-    "picomatch": "^4.0.7",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.5"
-  },
-  "devDependencies": {
     "@types/node": "^22.20.4",
     "@types/picomatch": "^4.0.3",
+    "@typesafe-ai/sdk": "^0.6.0",
     "esbuild": "^0.28.2",
+    "p-limit": "^7.3.3",
+    "picomatch": "^4.0.7",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.1"
-  },
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20"
+    "vitest": "^5.0.1",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
   }
 }
