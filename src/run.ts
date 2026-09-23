@@ -187,6 +187,7 @@ export async function run(inputs: RunInputs, deps: RunDeps): Promise<RunResult> 
     errors: evaluation.errors.length,
     skippedRequests: evaluation.skippedRequests.length,
     skippedByBudget: evaluation.skippedRequests.filter((s) => s.reason === "budget").length,
+    skippedByBlock: evaluation.skippedRequests.filter((s) => s.reason === "blocked").length,
     retries: evaluation.retries,
     splits: evaluation.splits,
     oversizedQuestions: oversized,

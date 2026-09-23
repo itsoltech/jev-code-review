@@ -79,8 +79,10 @@ export function renderSummary(report: ReviewReport, inline: Set<string>): string
   const coverage: string[] = [];
   if (notReviewed.length) coverage.push(...notReviewed.map((f) => `- ${inlineCode(f.path, 120)}: ${f.reason.replace("_", " ")}`));
   const byBudget = health.skippedByBudget ?? 0;
-  const byTimeout = health.skippedRequests - byBudget;
+  const byBlock = health.skippedByBlock ?? 0;
+  const byTimeout = health.skippedRequests - byBudget - byBlock;
   if (byBudget) coverage.push(`- ${byBudget} request(s) skipped: budget.max_run_tokens reached`);
+  if (byBlock) coverage.push(`- ${byBlock} request(s) skipped: the same content was already blocked (see errors)`);
   if (byTimeout) coverage.push(`- ${byTimeout} request(s) skipped: budget.run_timeout_seconds reached`);
   if (health.oversizedQuestions) coverage.push(`- ${health.oversizedQuestions} question(s) too large for the token limits`);
   if (report.errors.length) coverage.push(...report.errors.slice(0, 10).map((e) => `- error: ${e.replace(/[<>]/g, "")}`));

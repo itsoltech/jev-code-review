@@ -7,8 +7,10 @@ export type ReviewEvent = "APPROVE" | "COMMENT" | "REQUEST_CHANGES";
 export interface RunHealth {
   errors: number;
   skippedRequests: number;
-  /** Part of skippedRequests that the token budget stopped; the rest hit the run timeout. */
+  /** Part of skippedRequests that the token budget stopped. */
   skippedByBudget?: number;
+  /** Part of skippedRequests not sent because a request with the same state was blocked. */
+  skippedByBlock?: number;
   retries?: number;
   splits?: number;
   /** Questions dropped because the state left no room for them. */
@@ -92,7 +94,7 @@ function approveBlockers(
   const out: string[] = [];
   // Never approve what was not fully reviewed.
   if (health.errors) out.push(`${health.errors} failed request(s)`);
-  if (health.skippedRequests) out.push(`${health.skippedRequests} request(s) skipped by budget or timeout`);
+  if (health.skippedRequests) out.push(`${health.skippedRequests} request(s) skipped by budget, timeout or a blocked request`);
   if (health.oversizedQuestions) out.push(`${health.oversizedQuestions} question(s) did not fit the token limits`);
   const notReviewed = unreviewed(health);
   if (notReviewed.length) out.push(`${notReviewed.length} file(s) not reviewed`);

@@ -1,7 +1,7 @@
-import { APITimeoutError, BadRequestError, InternalServerError, RateLimitError } from "@typesafe-ai/sdk";
+import { APITimeoutError, BadRequestError, InternalServerError, PermissionDeniedError, RateLimitError } from "@typesafe-ai/sdk";
 import { describe, expect, it } from "vitest";
 import { estimateTokens, packQuestions, type PlannedRequest } from "../../src/jev/batch.js";
-import { classifyFailure, emptyEvaluation, evaluate, type JevPort } from "../../src/jev/evaluate.js";
+import { blockedMessage, classifyFailure, emptyEvaluation, evaluate, type JevPort } from "../../src/jev/evaluate.js";
 import { hunk } from "../helpers/factories.js";
 
 const noul = { type: "noul" as const, instructions: "x" };
@@ -20,6 +20,7 @@ describe("classifyFailure", () => {
     expect(classifyFailure(new InternalServerError(529, {}, headers, "overloaded"))).toBe("transient");
     expect(classifyFailure(new APITimeoutError(10_000))).toBe("transient");
     expect(classifyFailure(new BadRequestError(400, {}, headers, "context length exceeded"))).toBe("too_large");
+    expect(classifyFailure(new PermissionDeniedError(403, {}, headers, "<!DOCTYPE html>"))).toBe("blocked");
     expect(classifyFailure(new Error("bug"))).toBe("fatal");
   });
 });
@@ -120,6 +121,38 @@ describe("evaluate", () => {
     });
     expect(result.skippedRequests.map((s) => s.reason)).toEqual(["timeout", "timeout"]);
     expect(emptyEvaluation().splits).toBe(0);
+  });
+});
+
+describe("blocked requests", () => {
+  const cloudflare = new Headers({ server: "cloudflare", "cf-ray": "a3fc83ce4d3f64d7-WAW" });
+  const block = () => new PermissionDeniedError(403, "<!DOCTYPE html>", cloudflare, "403 <!DOCTYPE html>");
+
+  it("names the firewall and the ray id", () => {
+    expect(blockedMessage(block())).toContain("Cloudflare");
+    expect(blockedMessage(block())).toContain("cf-ray a3fc83ce4d3f64d7-WAW");
+  });
+
+  it("sends a blocked state once: no retry, no split, other requests with that state skipped", async () => {
+    const sent: string[] = [];
+    const jev: JevPort = {
+      async ask({ state, questions }) {
+        const tag = (state as { tag: string }).tag;
+        sent.push(tag);
+        if (tag === "bad") throw block();
+        return { model: "jev-1.13.0", answers: answerAll(questions), inputTokens: 1 };
+      },
+    };
+    const withState = (r: PlannedRequest, tag: string): PlannedRequest => ({ ...r, subject: { ...hunk(), key: tag }, state: { tag } });
+    const reqs = [withState(request(4, "a"), "bad"), withState(request(2, "b"), "bad"), withState(request(2, "c"), "bad"), withState(request(1, "d"), "ok")];
+    const result = await evaluate(reqs, jev, { ...opts, concurrency: 1 });
+    expect(sent).toEqual(["bad", "ok"]);
+    expect(result.retries).toBe(0);
+    expect(result.splits).toBe(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.message).toContain("cf-ray");
+    expect(result.skippedRequests.map((s) => s.reason)).toEqual(["blocked", "blocked"]);
+    expect(result.answers.size).toBe(1);
   });
 });
 

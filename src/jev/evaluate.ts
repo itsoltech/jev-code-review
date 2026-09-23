@@ -18,12 +18,15 @@ export interface EvalError {
   message: string;
 }
 
-export type SkipReason = "budget" | "timeout";
+export type SkipReason = "budget" | "timeout" | "blocked";
 
 export interface Evaluation {
   answers: Map<string, Answer>;
   errors: EvalError[];
-  /** Requests not sent because the run token budget or the run timeout was reached. */
+  /**
+   * Requests not sent because the run token budget or the run timeout was reached, or because
+   * an earlier request with the same state was blocked.
+   */
   skippedRequests: { request: PlannedRequest; reason: SkipReason }[];
   inputTokens: number;
   models: Set<string>;
@@ -51,16 +54,30 @@ export function emptyEvaluation(): Evaluation {
   return { answers: new Map(), errors: [], skippedRequests: [], inputTokens: 0, models: new Set(), retries: 0, splits: 0 };
 }
 
-type Failure = "transient" | "too_large" | "fatal";
+type Failure = "transient" | "too_large" | "blocked" | "fatal";
 
-/** 429 and 5xx (529 overloaded) and connection problems pass; 400/413/422 may be a request that is too big. */
+/**
+ * 429 and 5xx (529 overloaded) and connection problems pass; 400/413/422 may be a request that is
+ * too big; 403 is a refusal of this content (the firewall in front of the API reads the state),
+ * which the same request would get again.
+ */
 export function classifyFailure(e: unknown): Failure {
   if (e instanceof RateLimitError || e instanceof APIConnectionError) return "transient";
   if (e instanceof APIError) {
+    if (e.status === 403) return "blocked";
     if (e.status === 408 || e.status === 429 || e.status >= 500) return "transient";
     if (e.status === 400 || e.status === 413 || e.status === 422) return "too_large";
   }
   return "fatal";
+}
+
+/** A 403 from Cloudflare comes as an HTML page; its ray id lets TypeSafe find the blocking rule. */
+export function blockedMessage(e: unknown): string {
+  const headers = e instanceof APIError ? e.headers : undefined;
+  const ray = headers?.get("cf-ray");
+  const cloudflare = headers?.get("server")?.toLowerCase() === "cloudflare" || /cloudflare/i.test(String((e as Error)?.message));
+  const who = cloudflare ? "the firewall in front of the TypeSafe API (Cloudflare)" : "the TypeSafe API";
+  return `blocked by ${who} with 403${ray ? `, cf-ray ${ray}` : ""}; requests with this content are not sent again`;
 }
 
 const isTimeout = (e: unknown) => e instanceof Error && e.name === "APITimeoutError";
@@ -91,6 +108,8 @@ const defaultSleep = (ms: number, signal: AbortSignal) =>
  * - a request the API rejects as too large, or one that times out, is split in half;
  * - the run token budget is checked against actual usage, with estimates scaled by the ratio of
  *   actual to estimated tokens seen so far;
+ * - a request refused with 403 is not retried, and the other requests with the same state are
+ *   not sent;
  * - whatever is left when the run timeout fires is reported as skipped, not failed.
  */
 export async function evaluate(
@@ -109,6 +128,7 @@ export async function evaluate(
   let estimated = 0;
   let actual = 0;
   let calmStreak = 0;
+  const blocked = new Set<string>();
 
   // chars/3 overestimates; once replies arrive, scale estimates by what the API really counted.
   const projected = (req: PlannedRequest) => Math.ceil(req.estimatedTokens * (estimated > 0 ? Math.min(1, actual / estimated) : 1));
@@ -122,6 +142,7 @@ export async function evaluate(
     const req = job.request;
     const cost = projected(req);
     if (opts.signal.aborted) return void into.skippedRequests.push({ request: req, reason: "timeout" });
+    if (blocked.has(req.subject.key)) return void into.skippedRequests.push({ request: req, reason: "blocked" });
     if (into.inputTokens + reserved + cost > opts.maxRunTokens) return void into.skippedRequests.push({ request: req, reason: "budget" });
     reserved += cost;
     try {
@@ -138,6 +159,12 @@ export async function evaluate(
     } catch (e) {
       if (opts.signal.aborted) return void into.skippedRequests.push({ request: req, reason: "timeout" });
       const failure = classifyFailure(e);
+      if (failure === "blocked") {
+        // Several requests share one state; the first refusal reports it, the rest are skipped.
+        if (blocked.has(req.subject.key)) return void into.skippedRequests.push({ request: req, reason: "blocked" });
+        blocked.add(req.subject.key);
+        return void into.errors.push({ subjectKey: req.subject.key, message: blockedMessage(e) });
+      }
       const halves = (failure === "too_large" || isTimeout(e)) && splitRequest(req);
       if (halves) {
         // Smaller requests fit the context limits and answer faster.
