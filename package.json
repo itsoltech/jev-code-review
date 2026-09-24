@@ -1,6 +1,6 @@
 {
   "name": "@itsoltech/jev-code-review",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Configurable pull request review powered by TypeSafe Jev: GitHub Action and CLI",
   "keywords": [
     "code-review",

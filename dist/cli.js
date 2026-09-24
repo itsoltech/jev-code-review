@@ -29491,7 +29491,7 @@ function createJevPort(opts) {
 }
 
 // src/version.ts
-var VERSION2 = true ? "1.1.0" : "dev";
+var VERSION2 = true ? "1.1.1" : "dev";
 
 // src/report/sarif.ts
 var LEVEL = { blocker: "error", major: "error", minor: "warning", info: "note" };
