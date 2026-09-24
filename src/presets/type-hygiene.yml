@@ -4,6 +4,7 @@ vars:
 
 rules:
   - id: types.any-without-reason
+    enabled: false
     description: '`any` without an eslint-disable comment that gives the reason'
     type: pattern
     field: added_lines

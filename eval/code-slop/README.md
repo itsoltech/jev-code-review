@@ -12,7 +12,7 @@ All runs use `jev-1.13.0` on 2026-09-23.
 npm run calibrate -- --data eval/datasets/code-slop-fixtures.jsonl --config eval/code-slop/jev-review.yml
 ```
 
-59 of 60 rows get the expected answer, including all `insufficient_context` rows. The one miss is `R001_positive` (a three-level pass-through chain), which Jev answers `absent` at 0.28. The `Effect.tryPromise` adapter is not reported as a wrapper chain, and without call sites the domain-error rule answers `insufficient_context`. These fixtures are synthetic and state their contract explicitly, so they are the easy case.
+59 of 60 rows get the expected answer, including all `insufficient_context` rows. Two rows added on 2026-09-24 (`R002_multiline_*`) spread a nested ternary over several lines; since the pre-filter also matches runs of adjacent added lines, the violation is asked and answered `present`, and the run is 61 of 62. The one miss is `R001_positive` (a three-level pass-through chain), which Jev answers `absent` at 0.28. The `Effect.tryPromise` adapter is not reported as a wrapper chain, and without call sites the domain-error rule answers `insufficient_context`. These fixtures are synthetic and state their contract explicitly, so they are the easy case.
 
 ## Real code without a stated contract
 

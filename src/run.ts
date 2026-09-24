@@ -10,7 +10,7 @@ import { emptyEvaluation, errorMessage, evaluate, type JevPort } from "./jev/eva
 import { activeRules, canLocate, isModelRule, QuestionKeys, questionsFor, ruleApplies, whereQuestion } from "./jev/questions.js";
 import { buildState, fileSubject, hunkSubject } from "./jev/state.js";
 import { computeComposite } from "./policy/composite.js";
-import { compareFindings, deriveFindings, fileLinesFindings, judge, linePatternFindings, patternFindings } from "./policy/findings.js";
+import { abstentions, compareFindings, deriveFindings, fileLinesFindings, judge, linePatternFindings, patternFindings } from "./policy/findings.js";
 import { countBySeverity, decide, type RunHealth } from "./policy/verdict.js";
 import type { GitHubPort } from "./ports.js";
 import { publish, type PublishResult } from "./report/publish.js";
@@ -191,6 +191,7 @@ export async function run(inputs: RunInputs, deps: RunDeps): Promise<RunResult> 
     retries: evaluation.retries,
     splits: evaluation.splits,
     oversizedQuestions: oversized,
+    abstentions: abstentions(keys.meta, evaluation.answers, cfg),
     skippedFiles,
   };
   const verdict = decide(findings, composite.composite, health, cfg);

@@ -1,0 +1,6 @@
+# Config for calibrating the jev:maintainability preset, including the rule it turns off.
+extends: ["jev:maintainability"]
+model: jev-1.13.0
+rules:
+  - id: maint.resource-lifetime
+    enabled: true

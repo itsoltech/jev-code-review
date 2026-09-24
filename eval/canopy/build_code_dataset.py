@@ -18,6 +18,10 @@ import sys
 from fnmatch import fnmatch
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from anonymize import redact
+
+
 DATA = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/canopy-data")
 HERE = Path(__file__).parent
 OUT = HERE.parent / "datasets" / "canopy-code.jsonl"
@@ -183,21 +187,6 @@ for labels_file in sorted(HERE.glob("labels-*.json")):
             **({"synthetic": item["synthetic"]} if item.get("synthetic") else {}),
             "labels": {data["rule"]: label},
         })
-
-# Names of other projects that appear in canopy's public PR text are replaced before saving.
-REDACT = [(re.compile(r"gakko", re.I), "ExampleProject")]
-
-
-def redact(value):
-    if isinstance(value, str):
-        for pattern, replacement in REDACT:
-            value = pattern.sub(replacement, value)
-        return value
-    if isinstance(value, list):
-        return [redact(v) for v in value]
-    if isinstance(value, dict):
-        return {k: redact(v) for k, v in value.items()}
-    return value
 
 
 OUT.write_text("".join(json.dumps(redact(r), ensure_ascii=False) + "\n" for r in rows))

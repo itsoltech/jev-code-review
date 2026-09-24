@@ -1,0 +1,104 @@
+{
+  "configPath": "eval/calibration/meta-title/recommended.yml",
+  "sources": [
+    "jev:base",
+    "jev:security",
+    "jev:correctness",
+    "jev:tests",
+    "jev:recommended",
+    ".github/jev-review.yml"
+  ],
+  "warnings": [],
+  "rules": [
+    {
+      "id": "meta.injection",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "sec.sql-concat",
+      "type": "noul",
+      "severity": "blocker",
+      "enabled": true
+    },
+    {
+      "id": "sec.hardcoded-secret",
+      "type": "noul",
+      "severity": "blocker",
+      "enabled": true
+    },
+    {
+      "id": "sec.command-injection",
+      "type": "noul",
+      "severity": "blocker",
+      "enabled": true
+    },
+    {
+      "id": "sec.unsafe-html",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "sec.tls-verification-off",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "sec.sensitive-logging",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "corr.swallowed-error",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "corr.debug-leftover",
+      "type": "noul",
+      "severity": "minor",
+      "enabled": true
+    },
+    {
+      "id": "corr.floating-promise",
+      "type": "noul",
+      "severity": "major",
+      "enabled": true
+    },
+    {
+      "id": "corr.todo-added",
+      "type": "noul",
+      "severity": "info",
+      "enabled": true
+    }
+  ],
+  "dimensions": [],
+  "policy": {
+    "request_changes": {
+      "severities": [
+        "blocker"
+      ]
+    },
+    "approve": {
+      "enabled": false,
+      "max_findings": {
+        "blocker": 0,
+        "major": 0
+      },
+      "composite_at_least": 0.8,
+      "no_needs_human": true,
+      "no_abstentions": true
+    },
+    "fail_check": {
+      "severities": [
+        "blocker"
+      ]
+    },
+    "on_error": "neutral"
+  }
+}

@@ -1,0 +1,1270 @@
+{
+ "note": "Hand labels for jev:maintainability on canopy-desktop hunks that pass each rule candidate_regex. Selection: every hunk Jev scored 0.3 or more on a first run, plus 12 random others per rule; for resource-lifetime also every hunk added by the onX subscription pattern. needs_file marks labels that needed the full file at the merge commit.",
+ "items": [
+  {
+   "pr": 139,
+   "path": ".github/workflows/opencode-compat.yml",
+   "hunk": 0,
+   "rule": "maint.blanket-suppression",
+   "label": "clean",
+   "reason": "The only '|| true' is on `grep -c .` inside a count assignment, where it stops grep's exit 1 on zero matches from failing the step; it does not mask a lint, test or type-check failure, and no other check is loosened."
+  },
+  {
+   "pr": 138,
+   "path": ".github/workflows/codex-compat.yml",
+   "hunk": 0,
+   "rule": "maint.blanket-suppression",
+   "label": "clean",
+   "reason": "The only '|| true' is on `grep -c .` inside a count assignment, where it stops grep's exit 1 on zero matches from failing the step; it does not mask a lint, test or type-check failure, and no other check is loosened."
+  },
+  {
+   "pr": 121,
+   "path": ".github/workflows/claude-code-compat.yml",
+   "hunk": 0,
+   "rule": "maint.blanket-suppression",
+   "label": "clean",
+   "reason": "The only '|| true' is on `grep -c .` inside a count assignment, where it stops grep's exit 1 on zero matches from failing the step; it does not mask a lint, test or type-check failure, and no other check is loosened."
+  },
+  {
+   "pr": 139,
+   "path": "resources/opencode-canopy-bridge.ts",
+   "hunk": 0,
+   "rule": "maint.blanket-suppression",
+   "label": "violation",
+   "reason": "File-level disable of no-unused-vars for a new 177-line file where only a few underscore-prefixed callback parameters (_input, _options, _output) need it; the same file uses a scoped eslint-disable-next-line elsewhere.",
+   "line_text": "/* eslint-disable @typescript-eslint/no-unused-vars */"
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/runConfigCommands.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The only timers race the pre_run/post_run PTY against onExit and kill the session on timeout; no fixed delay precedes a read of earlier work."
+  },
+  {
+   "pr": 92,
+   "path": "perf/renderer-perf.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "After openProject the test waits a fixed 3000 ms and then counts DOM nodes as if the project had finished rendering, with no wait on a load condition.",
+   "line_text": "await page.waitForTimeout(3000)"
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "Debounce: the 200 ms timer is cleared and rescheduled on each file event to coalesce bursts before refresh()."
+  },
+  {
+   "pr": 92,
+   "path": "perf/memory-leak.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "openProject is followed by a fixed 1500 ms wait and then getDiagnostics reads gitWatcherCount; likewise killPty is followed by fixed waits before ptySessionCount is asserted, instead of waiting for the session/watcher state to change.",
+   "line_text": "await page.waitForTimeout(1500)"
+  },
+  {
+   "pr": 92,
+   "path": "perf/ipc-monitor.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The waits define an IPC traffic capture window (drain, wait CAPTURE_MS, drain) that the test measures; the later drain reads traffic over the interval, not the result of one operation."
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/DiffPane.svelte",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "When files changes, setupObserver runs after a fixed 100 ms and queries .file-section elements as if Svelte had finished rendering (tick() would be the completion signal); the 150 ms scroll timer likewise stands in for 'tab switch + DOM layout completes'.",
+   "line_text": "const timerId = setTimeout(setupObserver, 100)"
+  },
+  {
+   "pr": 27,
+   "path": "src/main/index.ts",
+   "hunk": 1,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The 500 ms wait after broadcasting update:installing gives the renderer time to show a state (UX timing) and nothing reads that result; the 10 s timer is a force-exit safety net."
+  },
+  {
+   "pr": 90,
+   "path": "src/renderer/src/lib/taskTracker/taskContext.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The 60 s timer deletes downloaded attachments later; it does not read the result of earlier work (it assumes consumers are done, which is a different problem than this rule)."
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/RepoConfigManager.ts",
+   "hunk": 2,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "delay(retryDelay) is retry backoff before trying rename again after a transient error."
+  },
+  {
+   "pr": 66,
+   "path": "src/renderer/src/lib/stores/toast.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "Toast auto-dismiss timers are UX timing."
+  },
+  {
+   "pr": 149,
+   "path": "src/renderer/src/components/drawing/drawingActions.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "unclear",
+   "reason": "clipboard.write is awaited before the 250 ms wait, which the rule excludes; the code comment says the OS pasteboard write is still in flight."
+  },
+  {
+   "pr": 92,
+   "path": "perf/startup-bench.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The 3000 ms 'settle' wait precedes an idle memory baseline; no operation is started in the test and the wait defines the measurement point rather than standing in for a specific completion signal."
+  },
+  {
+   "pr": 14,
+   "path": "e2e/settings.spec.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "After input.fill the test waits a fixed 100 ms ('just wait a tick') and reads the persisted pref with getStoredPref instead of polling until the stored value changes.",
+   "line_text": "await page.waitForTimeout(100)"
+  },
+  {
+   "pr": 187,
+   "path": "src/main/remote/SignalingServer.ts",
+   "hunk": 1,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The 5 s timer bounds server.close() and force-closes connections; the code after it does not read a result of earlier work."
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "toggleBrowserDevTools is fired without awaiting, then a fixed 150 ms wait precedes capturePageFull, which assumes DevTools has closed so the screenshot covers the full area.",
+   "line_text": "await new Promise((r) => setTimeout(r, 150))"
+  },
+  {
+   "pr": 3,
+   "path": "src/renderer/src/lib/stores/toast.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "Toast auto-dismiss timer is UX timing."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/tooltip/delayedAction.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "Generic cancellable delayed callback used for tooltip hover delay (UX timing); nothing reads earlier work."
+  },
+  {
+   "pr": 92,
+   "path": "perf/cpu-profile.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "The 5000 ms waits between startCPUProfile and stopCPUProfile set the profiling window, which is the measurement itself."
+  },
+  {
+   "pr": 260,
+   "path": "perf/terminal-replay.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "After perfOpenProject/workspaceAttachProject the test waits a fixed 2000 ms and then opens a tab and reads getAppState tabsByWorktree[worktreePath], assuming the attach has finished, while the rest of the test uses waitForFunction for real conditions.",
+   "line_text": "await page.waitForTimeout(2_000)"
+  },
+  {
+   "pr": 92,
+   "path": "perf/fixtures.ts",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "openProject sends url:action and then waits a fixed 2000 ms ('Wait for workspace to load') before returning to callers that read workspace state, with no wait on a load condition.",
+   "line_text": "await page.waitForTimeout(2000)"
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/components/shared/Tooltip.svelte",
+   "hunk": 0,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "400 ms tooltip show delay on hover is UX timing."
+  },
+  {
+   "pr": 238,
+   "path": "src/main/pty/PtyManager.ts",
+   "hunk": 4,
+   "rule": "maint.magic-delay",
+   "label": "clean",
+   "reason": "SIGTERM followed by a 750 ms SIGKILL escalation timer; nothing reads a result after the delay."
+  },
+  {
+   "pr": 338,
+   "path": "e2e/app-state.spec.ts",
+   "hunk": 2,
+   "rule": "maint.magic-delay",
+   "label": "violation",
+   "reason": "The test spawns PowerShell to lock a file, waits a fixed 3000 ms ('Give PowerShell a moment to acquire the handle') and then runs the removal whose asserted outcome depends on the lock being held.",
+   "line_text": "await new Promise((resolve) => setTimeout(resolve, 3000))"
+  },
+  {
+   "pr": 9,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onBrowserFocused is added to the unsubs array that the onMount cleanup releases with unsubs.forEach.",
+   "needs_file": true
+  },
+  {
+   "pr": 12,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onRestoreActiveWorktree unsubscribe is returned from $effect."
+  },
+  {
+   "pr": 18,
+   "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onGitChanged unsubscribe is returned from $effect."
+  },
+  {
+   "pr": 22,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The preload subscription is returned from $effect, so Svelte calls the unsubscribe on re-run and unmount."
+  },
+  {
+   "pr": 27,
+   "path": "src/renderer/src/components/UpdateBanner.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onUpdateInstalling is added to the unsubs array that the effect cleanup releases."
+  },
+  {
+   "pr": 31,
+   "path": "src/renderer/src/components/UpdateBanner.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onUpdateInstalling is added to the unsubs array that the effect cleanup releases."
+  },
+  {
+   "pr": 31,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 3,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The preload subscription is returned from $effect, so Svelte calls the unsubscribe on re-run and unmount."
+  },
+  {
+   "pr": 33,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Renamed subscriptions keep returning their unsubscribe functions from $effect."
+  },
+  {
+   "pr": 52,
+   "path": "src/renderer/src/components/worktree/CreateWorktreeModal.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "progressAddon.onChange is on an addon of the local terminal, which disposeSetupTerminal() disposes in onDestroy."
+  },
+  {
+   "pr": 58,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The preload subscription is returned from $effect, so Svelte calls the unsubscribe on re-run and unmount."
+  },
+  {
+   "pr": 60,
+   "path": "src/main/index.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "windowManager.onAllWindowsClosed is registered once in app startup and is meant to last for the process."
+  },
+  {
+   "pr": 64,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 3,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "session.pty.onExit is on the PTY spawned in the same handler, and the session is kept by ptyManager/wsBridge, which kill and destroy it through tmux:detach.",
+   "needs_file": true
+  },
+  {
+   "pr": 65,
+   "path": "src/renderer/src/lib/stores/tools.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onToolsChanged unsubscribe is stored in a module variable and released by destroyToolStore()."
+  },
+  {
+   "pr": 74,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onRestoreWindow unsubscribe is returned from $effect."
+  },
+  {
+   "pr": 77,
+   "path": "src/main/git/GitWatcher.ts",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No listener or interval is added; the debounce timer is stored in this.debounceTimer and cleared before rescheduling."
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onGitChanged unsubscribe is still returned from $effect."
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "term.onData is on the component's own terminal and its disposable is stored in dataDisposable."
+  },
+  {
+   "pr": 92,
+   "path": "src/main/agents/AgentHookServer.ts",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No registration; only the status callback moved to the session object."
+  },
+  {
+   "pr": 92,
+   "path": "src/main/agents/AgentHookServer.ts",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No registration; only the hook callback moved to the session object."
+  },
+  {
+   "pr": 96,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onGitChanged unsubscribe is called in the onMount cleanup."
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/editor/EditorPane.svelte",
+   "hunk": 3,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onFilesChanged unsubscribe is returned from $effect."
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onFilesChanged unsubscribe is returned from $effect."
+  },
+  {
+   "pr": 126,
+   "path": "src/renderer/src/lib/stores/runConfig.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onPtyExit and onRunConfigPostRunResult unsubscribes are stored in _cleanupBackgroundListener, guarded against double registration and released by cleanupBackgroundListener()."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/lib/stores/remoteSession.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onStatusChange/onSignal unsubscribes are returned to the caller in the disposer, which also tears down the host controller."
+  },
+  {
+   "pr": 131,
+   "path": "src/renderer/src/lib/stores/perfHud.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The perfHud.onMetrics unsubscribe is stored and released by disablePerfHud()."
+  },
+  {
+   "pr": 135,
+   "path": "src/renderer/src/lib/stores/skills.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onSkillsChanged unsubscribe is stored in a module variable and released by destroySkillStore()."
+  },
+  {
+   "pr": 140,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The preload subscription is returned from $effect, so Svelte calls the unsubscribe on re-run and unmount."
+  },
+  {
+   "pr": 146,
+   "path": "src/renderer/src/lib/stores/profiles.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onProfilesChanged unsubscribe is stored in a module variable and released by the store's destroy function."
+  },
+  {
+   "pr": 158,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "onBrowserOpenUrl is added to the unsubs array that the onMount cleanup releases.",
+   "needs_file": true
+  },
+  {
+   "pr": 214,
+   "path": "src/renderer/src/lib/stores/remoteSession.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onStatusChange unsubscribe is still stored in unsubStatus and released by the disposer that initRemoteSessionListeners returns; the added disposed flag only guards late callbacks.",
+   "needs_file": true
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/tabCommands.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No listener, subscription, interval or handle is registered in the added command code."
+  },
+  {
+   "pr": 238,
+   "path": "src/renderer/src/lib/stores/workspace.svelte.ts",
+   "hunk": 7,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onAppStateChanged unsubscribe is stored in appStateCleanup and released by the returned disposer."
+  },
+  {
+   "pr": 244,
+   "path": "src/main/pty/PtyManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "p.onExit is on the PTY spawned in the same method and only prunes the session map."
+  },
+  {
+   "pr": 244,
+   "path": "src/main/pty/WsBridge.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The new onExit disposable is stored and disposed in bridge.cleanup."
+  },
+  {
+   "pr": 248,
+   "path": "src/main/remote/SignalingServer.ts",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No registration; only the pair-attempt arguments changed."
+  },
+  {
+   "pr": 260,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 7,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The onTerminalStreamStateChanged unsubscribe is stored in cleanupTerminalStreamState and called in the component teardown.",
+   "needs_file": true
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/layout/MainLayout.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The menu subscriptions keep being returned from $effect."
+  },
+  {
+   "pr": 55,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 3,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Every webview listener and window keydown/focus-url-bar listener is added in $effect with a returned cleanup, and IPC subscriptions are released in onMount's cleanup."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/lib/viewportTracker.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "visualViewport and window resize listeners are removed by the dispose() function returned to the caller."
+  },
+  {
+   "pr": 8,
+   "path": "src/renderer/src/components/shared/CustomNumberInput.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "The repeat interval is cleared only by pointerup/pointerleave; the component has no onDestroy, so unmounting mid-press (or a second pointerdown overwriting the handle) leaves the interval running.",
+   "line_text": "repeatInterval = setInterval(fn, 100)"
+  },
+  {
+   "pr": 239,
+   "path": "src/main/WindowManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "will-navigate is registered on the window's own webContents in the window setup code and dies with that window.",
+   "needs_file": true
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/workspaceCommands.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "sender.once('destroyed') fires when its target is destroyed, is guarded against duplicates, and only clears per-window maps."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/components/RemoteTerminalView.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "onMount awaits api.pty.getDimensions before subscribing; if the component unmounts during that await, onDestroy has already run, so the pty.data/closed/resized subscriptions and the host-side pty.subscribe registered afterwards are never released.",
+   "line_text": "unsubData = api.subscribe<string>(`pty.data.${sessionId}`, (chunk) => {"
+  },
+  {
+   "pr": 114,
+   "path": "src/preload/index.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "ipcRenderer listener is paired with a returned remover."
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/RemoteClientHost.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "stream.pipe(res) does not destroy the file stream when the client disconnects mid-response, so the abort path leaves the read stream and its file descriptor open (only the stream's own error path ends the response).",
+   "line_text": "const stream = fs.createReadStream(requested)"
+  },
+  {
+   "pr": 4,
+   "path": "src/main/claude/ClaudeHookServer.ts",
+   "hunk": 5,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "data/end/error listeners are on the per-request IncomingMessage, which is dropped with the request."
+  },
+  {
+   "pr": 31,
+   "path": "src/main/index.ts",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "win.once('closed') is followed by win.destroy(), so it fires; the 10s safety timer runs during app shutdown and exits the process."
+  },
+  {
+   "pr": 122,
+   "path": "src/main/index.ts",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The interval handle is stored in a module variable and cleared before every reschedule."
+  },
+  {
+   "pr": 33,
+   "path": "src/main/agents/AgentSessionManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The click listener is on a Notification created in the same function."
+  },
+  {
+   "pr": 74,
+   "path": "src/preload/index.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "ipcRenderer listener is paired with a returned remover."
+  },
+  {
+   "pr": 92,
+   "path": "src/main/agents/AgentHookServer.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "server.on('error') is on the server created in the same method and stored on this.server, closed by closeServerIfIdle."
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/app/terminal.tsx",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "All api.subscribe unsubscribers, the refit timer and the flush timer are released in the useEffect cleanup."
+  },
+  {
+   "pr": 55,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "In ELEMENT_PICK_JS and REGION_CAPTURE_JS the promise resolves on the overlay click/mouseup path but the document keydown handler is removed only on Escape, so it stays registered on the page after every successful pick.",
+   "line_text": "document.addEventListener('keydown', function handler(e) {"
+  },
+  {
+   "pr": 3,
+   "path": "src/preload/index.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Each ipcRenderer.on is paired with a returned remover."
+  },
+  {
+   "pr": 194,
+   "path": "src/main/agents/AgentHookServer.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Listeners are on the per-request stream and the new timer is cleared by finish() on every exit, or resolves after destroying the request."
+  },
+  {
+   "pr": 77,
+   "path": "src/main/pty/WsBridge.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "pty onData disposer is stored in bridge.cleanup, ws listeners are on per-connection sockets, and the heartbeat interval and server are stored and cleared in closeServerIfIdle."
+  },
+  {
+   "pr": 238,
+   "path": "e2e/agent-session-resume.spec.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "waitForExit races proc.once('exit') on the caller-owned app process against a 10s timer: when the timer rejects the exit listener stays on proc, and when exit wins the timer is never cleared (closeApp likewise leaves its 5s kill timer pending after app.close() resolves).",
+   "line_text": "new Promise<void>((resolve) => proc.once('exit', () => resolve())),"
+  },
+  {
+   "pr": 52,
+   "path": "src/main/worktree/WorktreeSetupRunner.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The abort listener is removed and the timeout cleared in settle() on every exit path; pty listeners are on the locally spawned process, which is killed on timeout/abort."
+  },
+  {
+   "pr": 60,
+   "path": "src/main/notch/NotchOverlayManager.ts",
+   "hunk": 5,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The focus handler is stored in this.focusHandler on the class-owned overlay window; the warmup timer is stored in this.warmupTimer."
+  },
+  {
+   "pr": 55,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "trackWindow listeners are on each window (called once per window by WindowManager) and are meant to live as long as that window; the app-lifetime BrowserManager owns them, and guest listeners die with the guest webContents.",
+   "needs_file": true
+  },
+  {
+   "pr": 55,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "before-input-event is registered on the guest webContents being set up, which dies with the webview.",
+   "needs_file": true
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/lib/remote/RemoteApi.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "subscribe passes through the client's unsubscribe function (typed () => void) to the caller."
+  },
+  {
+   "pr": 59,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The keydown handler is stored in keystrokeHandler and removed in the onMount teardown; the target is the component's own container element.",
+   "needs_file": true
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 5,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The keydown handler is now removed by cleanup(), which both the click and Escape paths call.",
+   "needs_file": true
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+   "hunk": 7,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The keydown handler is now removed by cleanup(), which both the mouseup and Escape paths call.",
+   "needs_file": true
+  },
+  {
+   "pr": 92,
+   "path": "src/main/agents/AgentHookServer.ts",
+   "hunk": 5,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Only the chunk type changed; the listener is on the per-request stream."
+  },
+  {
+   "pr": 141,
+   "path": "src/main/index.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The focus listener is on each window from an app-level browser-window-created handler and dies with that window."
+  },
+  {
+   "pr": 262,
+   "path": "src/main/pty/TerminalStreamService.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "pty onData/onExit disposers are stored in stream.cleanup, and the destroyed listener is stored on the subscriber and removed in unsubscribe."
+  },
+  {
+   "pr": 13,
+   "path": "src/main/notch/NotchOverlayManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Session-manager, screen and ipcMain listeners are stored in fields and removed in dispose()."
+  },
+  {
+   "pr": 219,
+   "path": "src/renderer/src/remote/components/RemoteTerminalView.svelte",
+   "hunk": 3,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The pointerdown listener now uses { signal: lifecycleSignal }."
+  },
+  {
+   "pr": 27,
+   "path": "src/main/index.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "win.once('closed') is followed by win.destroy(), so it fires; the 10s safety timer runs during app shutdown and exits the process."
+  },
+  {
+   "pr": 3,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "In the startElementPick and startRegionCapture scripts the promise resolves on the click/mouseup path but the document keydown handler is removed only on Escape, so it stays registered on the page after every completed pick.",
+   "line_text": "document.addEventListener('keydown', function handler(e) {"
+  },
+  {
+   "pr": 13,
+   "path": "src/preload/notch.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "ipcRenderer listener is paired with a returned remover."
+  },
+  {
+   "pr": 306,
+   "path": "src/main/notch/NotchOverlayManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "will-navigate is on the class-owned overlay window's webContents and dies with it."
+  },
+  {
+   "pr": 212,
+   "path": "src/renderer/src/remote/components/RemoteTerminalView.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The pointerdown listener is on an xterm child element that dies with the terminal; the inner pointerup/pointercancel listeners use a local AbortController aborted on either event."
+  },
+  {
+   "pr": 9,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The focus listener is on the webContents of the view created in create() and dies with that view.",
+   "needs_file": true
+  },
+  {
+   "pr": 220,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The handler and textarea are now stored in component variables for removal, and the targets belong to the component's own terminal.",
+   "needs_file": true
+  },
+  {
+   "pr": 324,
+   "path": "src/renderer/src/components/taskTracker/NewTaskForm.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The ResizeObserver is disconnected in the $effect cleanup and the FileReader is local."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/lib/api.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "subscribe passes through the client's unsubscribe function (typed () => void) to the caller."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "pointerdown/focus listeners are on the component's bound container and its own xterm textarea, which are disposed with the component.",
+   "needs_file": true
+  },
+  {
+   "pr": 262,
+   "path": "src/renderer/src/lib/remote/HostRpcServer.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "No listener, interval or handle is registered; forwarder.subscribe is released by the existing unsubscribe path."
+  },
+  {
+   "pr": 190,
+   "path": "src/main/browser/BrowserManager.ts",
+   "hunk": 1,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "will-prevent-unload is on the browser view's own webContents and dies with it.",
+   "needs_file": true
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/remote/lib/peer/SignalingClient.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Listeners are on the socket this client creates and stores in this.ws, closed by close()."
+  },
+  {
+   "pr": 238,
+   "path": "e2e/window-restore.spec.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "violation",
+   "reason": "waitForExit races proc.once('exit') on the caller-owned app process against a 10s timer: when the timer rejects the exit listener stays on proc, and when exit wins the timer is never cleared (closeApp likewise leaves its 5s kill timer pending after app.close() resolves).",
+   "line_text": "new Promise<void>((resolve) => proc.once('exit', () => resolve())),"
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer/src/lib/remote/PtyStreamForwarder.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Each WebSocket is stored in the sockets map and closed by unsubscribe() and dispose()."
+  },
+  {
+   "pr": 129,
+   "path": "src/main/remote/SignalingServer.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Server/wss are created per attempt and closed on failure or stored and closed in stop(); ws listeners are on per-connection sockets."
+  },
+  {
+   "pr": 262,
+   "path": "src/renderer/src/lib/remote/PtyStreamForwarder.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Subscription cleanups are stored and called on unsubscribe/pause/dispose, and the preload subscribePtyData removes its own listeners when the stream closes or errors.",
+   "needs_file": true
+  },
+  {
+   "pr": 124,
+   "path": "src/renderer/src/components/diff/DiffPane.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The scrollend listener is added in onMount and removed in its returned cleanup.",
+   "needs_file": true
+  },
+  {
+   "pr": 158,
+   "path": "src/preload/index.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "ipcRenderer listener is paired with a returned remover."
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/lib/remote/SignalingClient.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Handlers are on the socket this client creates and stores in this.ws, closed by close()."
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/components/terminal/terminal-view.tsx",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "All touch, resize, visualViewport and ResizeObserver registrations are released in cleanupFn, which also runs if the effect was torn down during the font await."
+  },
+  {
+   "pr": 22,
+   "path": "src/main/index.ts",
+   "hunk": 4,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "win.once('ready-to-show') is on a window created in the same scope and fires once or dies with it."
+  },
+  {
+   "pr": 31,
+   "path": "src/main/index.ts",
+   "hunk": 8,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "win.once('ready-to-show') is on a window created in the same scope and fires once or dies with it."
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/lib/remote/DataChannelRpc.ts",
+   "hunk": 0,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "Channel listeners are removed in dispose(), per-call timers are cleared on response/close/dispose, and subscribe returns an unsubscribe function."
+  },
+  {
+   "pr": 77,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 2,
+   "rule": "maint.resource-lifetime",
+   "label": "clean",
+   "reason": "The WebSocket is stored in wsRef and closed with its handlers nulled by disconnectWs(); reconnect timer is stored and guarded by disposed."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/credentialUpdate.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/taskTracker/ipcErrorMessage.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 337,
+   "path": "src/main/db/workspacePaths.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/components/shared/tooltipPosition.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 338,
+   "path": "src/renderer/src/lib/worktrees/removalConsent.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/main/db/preferenceKeys.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/ci/format.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/taskTracker/ipcErrorMessage.test.ts",
+   "hunk": 1,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 262,
+   "path": "e2e/app-state.spec.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Expected wsUrl changes from a ws:// regex to the exact value '' and a sessionId check is added, because PR 262 replaces the local WebSocket bridge with IPC; the empty value is intended, which the hunk alone does not show.",
+   "needs_file": true
+  },
+  {
+   "pr": 344,
+   "path": "src/main/taskTracker/prCreation.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/stores/sidebarSections.svelte.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ci/teamcity.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/async/latestRequest.test.ts",
+   "hunk": 0,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "Hunk only adds test lines (no removed lines, no .skip/.todo), so no existing check is dropped or weakened."
+  },
+  {
+   "pr": 262,
+   "path": "e2e/app-state.spec.ts",
+   "hunk": 6,
+   "rule": "maint.test-weakening",
+   "label": "clean",
+   "reason": "wsUrlIsRuntime: true is replaced by wsUrl: '' plus sessionId: expect.any(String), matching PR 262's removal of the WebSocket bridge, so the expectation changed on purpose to a specific value.",
+   "needs_file": true
+  },
+  {
+   "pr": 344,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 15,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "execFile's timeout option kills the gh child on timeout, and gh pr view only reads data.",
+   "needs_file": true
+  },
+  {
+   "pr": 199,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 1,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "The timer restores the cursor after a write burst; no timer races an operation."
+  },
+  {
+   "pr": 194,
+   "path": "src/renderer/src/components/preferences/UpdatePrefs.svelte",
+   "hunk": 1,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "UI dismiss timer, no timeout race."
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/diff/DiffPane.svelte",
+   "hunk": 1,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Only clears a debounce timer on teardown; no timeout race."
+  },
+  {
+   "pr": 91,
+   "path": "src/main/taskTracker/providers/youtrack.ts",
+   "hunk": 1,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "fetch receives AbortSignal.timeout(15_000), so the request is aborted when the timer wins."
+  },
+  {
+   "pr": 194,
+   "path": "src/main/changelog/fetchChangelog.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "fetch receives AbortSignal.timeout(15_000); the read-only request is aborted on timeout."
+  },
+  {
+   "pr": 64,
+   "path": "src/main/pty/TmuxManager.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "execFile timeout (10000/5000) kills the tmux/which child when it expires, so nothing is left running.",
+   "needs_file": true
+  },
+  {
+   "pr": 165,
+   "path": "mobile/src/lib/remote/DataChannelRpc.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "violation",
+   "reason": "call() rejects with RPC_TIMEOUT and drops the pending entry but sends no cancel frame, so the peer keeps executing the request; the method list includes state-changing calls (tools.spawn, tabs.close, pty.write, pty.kill).",
+   "line_text": "reject(new Error(`RPC_TIMEOUT: ${method}`))",
+   "needs_file": true
+  },
+  {
+   "pr": 238,
+   "path": "e2e/agent-session-resume.spec.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "closeApp kills the process when the 5 s timer wins, and waitForExit only bounds waiting for an exit after app.quit() already started shutdown."
+  },
+  {
+   "pr": 119,
+   "path": "src/renderer/src/lib/stores/tabs.svelte.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Clears a pending save timer; no timeout race."
+  },
+  {
+   "pr": 142,
+   "path": "src/renderer/src/lib/terminal/TerminalInstance.svelte",
+   "hunk": 2,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Clears a resize debounce timer on teardown; no timeout race."
+  },
+  {
+   "pr": 129,
+   "path": "src/renderer-shared/rpc/DataChannelRpc.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "violation",
+   "reason": "call() rejects on timeout and forgets the request without telling the peer, whose handler keeps running; RpcMethods includes state-changing methods (tools.spawn, tabs.close, pty.write, pty.kill).",
+   "line_text": "reject(new Error(`RPC_TIMEOUT: ${method}`))",
+   "needs_file": true
+  },
+  {
+   "pr": 92,
+   "path": "perf/ipc-monitor.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Fixed waits for a capture window; no timer races an operation."
+  },
+  {
+   "pr": 227,
+   "path": "src/main/commands/runConfigCommands.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "When the pre_run/post_run timer wins, ptyManager.kill(session.id) kills the process."
+  },
+  {
+   "pr": 344,
+   "path": "src/renderer/src/lib/tooltip/delayedAction.ts",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Delayed callback helper; no timeout race."
+  },
+  {
+   "pr": 114,
+   "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+   "hunk": 0,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Debounce timer; no timeout race."
+  },
+  {
+   "pr": 238,
+   "path": "src/main/ipc/handlers.ts",
+   "hunk": 24,
+   "rule": "maint.timeout-without-cancellation",
+   "label": "clean",
+   "reason": "Delayed attachment cleanup timer; no timer races an operation."
+  }
+ ]
+}

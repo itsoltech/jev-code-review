@@ -1,0 +1,114 @@
+{
+  "natural-pr9-0": {
+    "pr": 9,
+    "pr_title": "feat(ui): universal panel split with drag & drop",
+    "path": "src/renderer/src/lib/stores/tabs.svelte.ts",
+    "reason": "Boolean equality already yields exactly the chosen true/false; two branches differ.",
+    "added_line_needle": "pane.inspectorOpen = pane.inspectorOpen === false ? true : false"
+  },
+  "natural-pr3-1": {
+    "pr": 3,
+    "pr_title": "feat(browser): add built-in web browser with element/screenshot capture to AI agents",
+    "path": "src/preload/index.ts",
+    "reason": "Adapter removes the Electron IPC event, forwards payload and returns listener disposer.",
+    "added_line_needle": "onBrowserUrlChanged: (callback:"
+  },
+  "natural-pr3-2": {
+    "pr": 3,
+    "pr_title": "feat(browser): add built-in web browser with element/screenshot capture to AI agents",
+    "path": "src/main/browser/BrowserManager.ts",
+    "reason": "Optional favicon retrieval explicitly tolerates failure, catch does not rethrow or wrap, Promise rejection is handled.",
+    "added_line_needle": "// Favicon fetch failed, ignore"
+  },
+  "natural-pr4-3": {
+    "pr": 4,
+    "pr_title": "fix(security): harden Electron IPC, shell execution, and credential storage",
+    "path": "src/main/claude/ClaudeHookServer.ts",
+    "reason": "Untrusted HTTP header is checked at its input boundary; no dependency call is claimed invalid.",
+    "added_line_needle": "typeof provided !== 'string'"
+  },
+  "natural-pr13-4": {
+    "pr": 13,
+    "pr_title": "feat(notch): macOS notch overlay for Claude session status",
+    "path": "src/preload/notch.ts",
+    "reason": "Suppression is explicitly scoped to Electron contextBridge fallback, not external-data validation.",
+    "added_line_needle": "@ts-ignore -- fallback for non-isolated context"
+  },
+  "natural-pr91-5": {
+    "pr": 91,
+    "pr_title": "refactor: replace try/catch with neverthrow typed error handling",
+    "path": "src/main/errors.ts",
+    "reason": "T is inferred from the input Promise<T>; no factory, registry or strategy is introduced.",
+    "added_line_needle": "export function fromExternalCall<T, E>"
+  },
+  "natural-pr14-6": {
+    "pr": 14,
+    "pr_title": "test(e2e): add Playwright E2E test infrastructure",
+    "path": "e2e/app-launch.spec.ts",
+    "reason": "Smoke test checks actual Electron windows and page title, not an unrelated constant.",
+    "added_line_needle": "test('app launches and shows main window'"
+  },
+  "natural-pr18-7": {
+    "pr": 18,
+    "pr_title": "feat: add file browser with read-only editor pane",
+    "path": "src/renderer/src/components/sidebar/FileTreeSection.svelte",
+    "reason": "Implemented file tree renders entries; TODO describes future virtualization only.",
+    "added_line_needle": "TODO: add virtualization for large directory trees"
+  },
+  "natural-pr96-8": {
+    "pr": 96,
+    "pr_title": "feat: add diff review panel with tabbed right sidebar",
+    "path": "src/renderer/src/components/diff/ChangesPanel.svelte",
+    "reason": "Reduce sums per-file additions; no shared copied domain rule is established.",
+    "added_line_needle": "totalAdditions = $derived(allFiles.reduce"
+  },
+  "natural-pr52-9": {
+    "pr": 52,
+    "pr_title": "feat(worktree): stream setup command output in terminal",
+    "path": "src/main/worktree/WorktreeSetupRunner.ts",
+    "reason": "An empty SHELL means use the next available shell; Windows uses a different shell.",
+    "added_line_needle": "shellPath = isWin ?"
+  },
+  "natural-pr3-10": {
+    "pr": 3,
+    "pr_title": "feat(browser): add built-in web browser with element/screenshot capture to AI agents",
+    "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+    "reason": "Toolbar ref may be unavailable before mount; focus command is optional.",
+    "added_line_needle": "toolbarComponent?.focusUrlBar()"
+  },
+  "natural-pr3-11": {
+    "pr": 3,
+    "pr_title": "feat(browser): add built-in web browser with element/screenshot capture to AI agents",
+    "path": "src/renderer/src/components/browser/BrowserError.svelte",
+    "reason": "Actual retry callback is wired to user click, no automatic unbounded retry.",
+    "added_line_needle": "onclick={onRetry}"
+  },
+  "natural-pr3-12": {
+    "pr": 3,
+    "pr_title": "feat(browser): add built-in web browser with element/screenshot capture to AI agents",
+    "path": "src/main/browser/BrowserManager.ts",
+    "reason": "Single typed case switch returns different correct event kinds.",
+    "added_line_needle": "type: input.type === 'keyUp' ? 'keyUp' : 'keyDown'"
+  },
+  "natural-pr1-13": {
+    "pr": 1,
+    "pr_title": "feat(about): add About modal with license and external links",
+    "path": "src/preload/index.ts",
+    "reason": "Section heading groups related preload APIs; not a misleading description of one statement.",
+    "added_line_needle": "// About"
+  },
+  "natural-pr18-14": {
+    "pr": 18,
+    "pr_title": "feat: add file browser with read-only editor pane",
+    "path": "src/renderer/src/components/editor/EditorPane.svelte",
+    "reason": "Reactive invocation does not require a returned Promise; loadFile handles rejected read inside try/catch.",
+    "added_line_needle": "async function loadFile(): Promise<void>"
+  },
+  "natural-pr91-15": {
+    "pr": 91,
+    "pr_title": "refactor: replace try/catch with neverthrow typed error handling",
+    "path": "src/main/git/GitRepository.ts",
+    "reason": "Helper is scoped to git operations and carries the git command in error.",
+    "added_line_needle": "function gitCall<T>(command: string, promise: Promise<T>)"
+  }
+}

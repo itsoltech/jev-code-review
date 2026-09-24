@@ -1,4 +1,7 @@
 # Behavior docs must change together with user-visible behavior.
+context:
+  include_pr_body: true
+
 vars:
   source_paths: ["src/**"]
   docs_paths: ["docs/**"]
@@ -13,19 +16,26 @@ rules:
     severity: minor
     when: { files_changed: ["{{vars.source_paths}}"], files_unchanged: ["{{vars.docs_paths}}"] }
     instructions: >-
-      Using `pr` and `files`, does this pull request change user-visible behavior of the app,
-      such as new or changed UI, workflows, defaults, settings, keyboard shortcuts or error
-      messages? `stats` and `files` list what changed; no documentation file
-      ({{vars.docs_paths}}) was changed.
+      Using `pr` and `files`, does this pull request introduce a new user-visible behavior
+      that app users should learn from the docs: a new UI or workflow, a changed setting,
+      shortcut, default, error message or interaction? `stats` and `files` list changes;
+      no documentation file ({{vars.docs_paths}}) was changed. Judge the described
+      behavior, not the title prefix alone.
     criteria:
-      true: The title or description describes a new feature or changed behavior users will notice.
-      false: Internal refactor, tests, build or CI changes, dependency updates, or a fix that restores documented behavior.
+      true: >-
+        Introduces or changes a user-facing feature or workflow, including a new
+        confirmation step even when it is bundled into a maintenance PR.
+      false: >-
+        Internal refactor, tests, build or CI changes, dependency updates, or a fix
+        that restores intended existing behavior after a bug; a visible bug fix is not
+        by itself a new workflow that needs documentation.
   - id: docs.new-ipc-without-docs
     description: New IPC handler without a docs update
     type: pattern
     field: added_lines
     fires_when: match
     severity: minor
+    enabled: false
     paths: ["{{vars.source_paths}}"]
     regex: '\bipcMain\.handle\(\s*[''"]'
     when: { files_unchanged: ["{{vars.docs_paths}}"] }
@@ -35,6 +45,7 @@ rules:
     field: added_lines
     fires_when: match
     severity: minor
+    enabled: false
     paths: ["{{vars.error_type_paths}}"]
     regex: '_tag:\s*[''"][A-Z]'
     when: { files_unchanged: ["{{vars.docs_paths}}"] }

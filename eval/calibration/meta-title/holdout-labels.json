@@ -1,0 +1,22 @@
+{
+  "frozen_source": "eval/preset-holdout.json; /tmp/canopy-data/prs_full.json and pr_files.json",
+  "labeled_before_any_calibration_outcomes": true,
+  "note": "This is reserved from current tuning, not a fully blind prospective holdout; canopy-pr.jsonl already contains some titles. Final merged PR versions only; no rejected draft titles.",
+  "title": {
+    "284": {"title.prefix": false, "title.length": false, "title.lowercase": false, "title.period": false, "title.infra-not-user-facing": true},
+    "285": {"title.prefix": false, "title.length": false, "title.lowercase": false, "title.period": false, "title.infra-not-user-facing": false},
+    "286": {"title.prefix": false, "title.length": false, "title.lowercase": false, "title.period": false, "title.infra-not-user-facing": false},
+    "287": {"title.prefix": false, "title.length": false, "title.lowercase": false, "title.period": false, "title.infra-not-user-facing": false},
+    "289": {"title.prefix": false, "title.length": false, "title.lowercase": false, "title.period": false, "title.infra-not-user-facing": false}
+  },
+  "change_focus": {"284": 3, "285": 3, "286": 3, "287": 3, "289": 3},
+  "focus_rationale": "284 one postinstall fix; 285 one error-display flow; 286 two root causes within one task-send failure; 287 one package migration; 289 one alias-renaming sweep. Breadth of affected files does not itself imply unrelated change.",
+  "style_hunks": [
+    {"pr": 285, "path": "src/renderer/src/lib/taskTracker/taskToAgent.ts", "expected_readability": 3, "naming_violation": false, "reason": "Descriptive error-detail and user-message helpers; explicit status cases."},
+    {"pr": 286, "path": "src/main/commands/workspaceCommands.ts", "expected_readability": 3, "naming_violation": false, "reason": "comparableFsPath and samePath accurately describe normalization/comparison."},
+    {"pr": 286, "path": "src/renderer/src/components/taskTracker/TaskPickerModal.svelte", "expected_readability": 3, "naming_violation": false, "reason": "A single snapshot expression with no added declaration."},
+    {"pr": 287, "path": "src/renderer/src/components/dialogs/CrashReportDialog.svelte", "expected_readability": 3, "naming_violation": false, "reason": "A simple canonical icon import."},
+    {"pr": 289, "path": "src/renderer/src/lib/fileIcons.ts", "expected_readability": 3, "naming_violation": false, "reason": "Explicit canonical import names and file extension icon mapping."}
+  ],
+  "readability_note": "No applicable hunk in PR284: package.json is configuration, not added code. These are sampled code hunks, not all holdout hunks or a recall audit."
+}

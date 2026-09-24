@@ -2,11 +2,17 @@ extends: ["jev:security", "jev:correctness", "jev:tests"]
 dimensions:
   - id: change_focus
     description: Pull request stays on one topic
+    enabled: false
     scope: pr
     weight: 1
-    instructions: Using `pr` and `files`, how focused is this pull request on a single purpose?
+    instructions: >-
+      Using the PR title, description and changed file paths, judge whether the changes serve
+      one reviewable purpose. Related modules do not make independent goals related: a
+      platform-specific fix and an unrelated agent fix remain two purposes even if both
+      address the same OS. Conversely, a migration across many files, its tests and its
+      dependency cleanup are one purpose. Judge purpose, not number of files or diff size.
     criteria:
-      - Unrelated changes across many areas.
-      - Mostly one purpose with several unrelated changes.
-      - One purpose with a small unrelated change.
-      - One clear purpose.
+      - Two or more independent goals that should be reviewed separately, even if they share a platform or component.
+      - A main goal with substantial independent work.
+      - One goal with a small unrelated change.
+      - All changes support one clear purpose, including necessary tests and cleanup.

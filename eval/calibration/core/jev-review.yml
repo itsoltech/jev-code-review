@@ -1,0 +1,5 @@
+extends: ["jev:security", "jev:correctness", "jev:tests"]
+model: jev-1.13.0
+rules:
+  - id: tests.missing
+    enabled: true

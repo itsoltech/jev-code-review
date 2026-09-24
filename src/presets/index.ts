@@ -6,6 +6,7 @@ import prTemplate from "./pr-template.yml";
 import docsSync from "./docs-sync.yml";
 import resultErrors from "./result-errors.yml";
 import electron from "./electron.yml";
+import maintainability from "./maintainability.yml";
 import svelte5 from "./svelte5.yml";
 import theming from "./theming.yml";
 import patternMatching from "./pattern-matching.yml";
@@ -37,4 +38,5 @@ export const PRESETS: Record<string, string> = {
   "type-hygiene": typeHygiene,
   "async-state": asyncState,
   "code-slop": codeSlop,
+  maintainability,
 };

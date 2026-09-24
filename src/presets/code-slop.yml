@@ -2,7 +2,9 @@
 # authorship. Based on the code-slop rule pack (24 rules, TypeScript/JavaScript).
 #
 # Each rule is a Choice between present / absent / insufficient_context. Only "present" is a
-# finding. candidate_regex is a cheap pre-filter: Jev is asked only when an added line matches.
+# finding; insufficient_context is an abstention, which blocks approval while
+# policy.approve.no_abstentions is on. candidate_regex is a cheap pre-filter: Jev is asked only
+# when an added line, or a run of adjacent added lines, matches.
 # Most rules depend on the code's contract; give it through context.project_notes (project
 # conventions) or they will mostly answer insufficient_context. Start in report mode.
 vars:
@@ -42,6 +44,7 @@ rules:
       absent: The pattern is not there, or the facts show it is justified.
       insufficient_context: A fact needed to tell a violation from a correct use is missing.
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.nested-ternary
     description: Conditional expression packs several nested decisions
@@ -65,6 +68,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.boolean-ternary
     description: 'Boolean condition wrapped in ? true : false or an equivalent if/return'
@@ -86,6 +90,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.revalidated-invariant
     description: Re-checks an invariant already established by trusted validation
@@ -108,6 +113,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.failure-as-success
     description: A caught failure is returned as an ordinary successful result
@@ -131,6 +137,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.useless-catch
     description: catch only rethrows the same error
@@ -151,6 +158,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.lost-error-cause
     description: Wrapping an error drops the original cause
@@ -173,6 +181,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.async-promise-executor
     description: async function passed as the executor of new Promise
@@ -194,6 +203,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.unchecked-type-cast
     description: Type assertion stands in for a runtime check
@@ -215,6 +225,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.unverified-generic
     description: Generic function promises any T without a way to check it
@@ -237,6 +248,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.speculative-extension
     description: Factory, registry or strategy without a real extension point
@@ -259,6 +271,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.duplicated-business-rule
     description: The same business rule is copied and must change in several places
@@ -280,12 +293,15 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.useless-comment
     description: Comment restates the syntax or contradicts the code
     type: choice
     severity: info
     paths: ["{{vars.slop_paths}}"]
+    threshold: 0.7
+    needs_human_band: [0.7, 0.7]
     candidate_regex: '//|/\*'
     instructions:
       task: Judge this rule for the added code in `changes.lines`, using the facts in `context` and `project` if present.
@@ -301,6 +317,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.test-without-real-assertion
     description: Test assertion does not depend on the behavior it claims to test
@@ -323,6 +340,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.unawaited-async-work
     description: Required async work is not awaited or its rejection is not handled
@@ -345,6 +363,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.unsafe-retry
     description: Retry breaks the operation's contract
@@ -367,6 +386,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.domain-error-in-generic-helper
     description: Generic helper reports every failure with one operation's domain error
@@ -389,6 +409,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.empty-pipeline-step
     description: Pipeline step that changes nothing
@@ -412,6 +433,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: info }
+    abstain_labels: [insufficient_context]
 
   - id: slop.placeholder-success
     description: Placeholder reports success without doing the work
@@ -434,6 +456,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.api-mismatch
     description: Call does not match the dependency's confirmed API
@@ -454,6 +477,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]
 
   - id: slop.falsy-fallback
     description: '|| replaces a meaningful 0, false or empty string with a default'
@@ -476,6 +500,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.optional-chaining-skips-required-step
     description: Optional chaining silently skips a required step
@@ -498,6 +523,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.ignored-parameter
     description: Implementation ignores a parameter whose behavior the contract promises
@@ -519,6 +545,7 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: minor }
+    abstain_labels: [insufficient_context]
 
   - id: slop.copied-branch
     description: A branch does not produce the result its case requires
@@ -541,3 +568,4 @@ rules:
       policy: *policy
     criteria: *verdicts
     finding_labels: { present: major }
+    abstain_labels: [insufficient_context]

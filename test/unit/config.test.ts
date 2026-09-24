@@ -13,7 +13,6 @@ describe("loadConfig", () => {
     const ids = config.rules.map((r) => r.id);
     expect(ids).toContain("meta.injection");
     expect(ids).toContain("sec.sql-concat");
-    expect(ids).toContain("tests.missing");
     expect(config.model).toBe("jev-latest");
     expect(config.policy.approve.enabled).toBe(false);
   });
@@ -83,7 +82,6 @@ rules:
     const byId = new Map(config.rules.map((r) => [r.id, r]));
     expect(byId.has("corr.todo-added")).toBe(false);
     expect(byId.get("team.error-response")?.type).toBe("choice");
-    expect(config.dimensions.map((d) => [d.id, d.weight])).toEqual([["change_focus", 1], ["readability", 2]]);
   });
 
   it("fills preset variables from the project config", async () => {

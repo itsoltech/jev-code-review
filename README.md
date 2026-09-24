@@ -97,6 +97,7 @@ Configs merge in this order: the built-in `jev:base` (the prompt-injection guard
 | `jev:pattern-matching` | `switch` instead of a matcher library (regex) |
 | `jev:type-hygiene` | `any` without a justification comment (regex with `unless_previous_line`) |
 | `jev:code-slop` | 24 concrete anti-patterns ("AI slop"): failures returned as success, async Promise executors, casts instead of validation, tests without real assertions, placeholders that report success and more; each a present / absent / insufficient_context Choice with a candidate regex |
+| `jev:maintainability` | fixed delays used as synchronization, timeouts that leave the work running, checks switched off for more than the exception, weakened tests (Jev; listeners removed on one path only is off by default); file-wide `eslint-disable`, `@ts-nocheck`, `strict: false`, `.only` (regex) |
 
 ### Preset variables
 
@@ -123,11 +124,11 @@ Every rule has an `id`, a `type`, `instructions` and optional `criteria`, follow
 
 - `noul`: a yes/no question. `threshold` applies to P(yes), or to P(no) with `fires_on: "no"`, which lets a rule ask the natural question ("Does the description explain why?") and fire when the answer is no.
 - `score`: an ordered rubric (2 to 10 levels). The answer is normalized to 0..1; `direction` says which end is bad and `threshold` applies to the bad end.
-- `choice`: named options. `finding_labels` maps the options that count as problems to a severity.
+- `choice`: named options. `finding_labels` maps the options that count as problems to a severity. `abstain_labels` lists options that mean the rule could not be judged, such as `insufficient_context`; they are not findings, but the summary lists them and they block APPROVE.
 - `pattern`: a regular expression checked in code, with no model call. Use it for exact formats. `field` is `title`, `description`, `section:<heading>` (one section of the description, empty when missing or left as a template comment) or `added_lines` (each added line in files matching `paths`, reported inline on the first match; `ignore_regex` skips allowed exceptions, `unless_previous_line` skips a line whose predecessor matches, such as a justification comment). `fires_when: no_match` means the regex describes the required format, `match` means it describes the problem.
-- `file_lines`: a changed file longer than `max_lines` at the PR head, counted in code.
+- `file_lines`: a changed file longer than `max_lines` at the PR head, counted in code. Only a file the PR makes worse is reported: a new file, one that crosses the limit, or one that grows while over it. The length before the PR comes from the diff's added and removed line counts. `report_existing: true` also reports files that were already over the limit.
 
-`candidate_regex` on a Jev rule is a pre-filter: the rule is asked only when an added line matches, so a regex finds candidates and Jev judges them.
+`candidate_regex` on a Jev rule is a pre-filter: the rule is asked only when an added line, or a run of adjacent added lines joined with newlines, matches, so a regex finds candidates and Jev judges them. With `candidate_removed: true` removed lines are matched too, for rules about what a change takes away.
 
 Jev is the right tool when a check needs reading ("does the Why explain a reason?"). When the answer can be computed (title length, a prefix, a literal color, a forbidden import), a `pattern` rule is exact, free and never drifts. On canopy-desktop, the LLM validator miscounted title lengths and applied the prefix list inconsistently; the regex rules had no errors ([eval/canopy/README.md](eval/canopy/README.md)).
 
@@ -150,10 +151,11 @@ policy:
     max_findings: { blocker: 0, major: 0, minor: 3 }
     composite_at_least: 0.8
     no_needs_human: true
+    no_abstentions: true
   on_error: neutral   # or fail
 ```
 
-APPROVE is off by default. When enabled, the action never approves a run with failed requests, budget skips, unreviewed files, uncertain findings or a fired injection guard. Bot approvals also need the repository setting "Allow GitHub Actions to create and approve pull requests", and they count toward required approvals. With `output.review_events: comment_only` the action never posts REQUEST_CHANGES and blocks only through the failed check, which avoids stale blocking reviews on protected branches.
+APPROVE is off by default. When enabled, the action never approves a run with failed requests, budget skips, unreviewed files, uncertain findings, a fired injection guard or, while `no_abstentions` is on, a rule answered with one of its `abstain_labels`. Bot approvals also need the repository setting "Allow GitHub Actions to create and approve pull requests", and they count toward required approvals. With `output.review_events: comment_only` the action never posts REQUEST_CHANGES and blocks only through the failed check, which avoids stale blocking reviews on protected branches.
 
 ## Inputs and outputs
 
@@ -183,7 +185,9 @@ Default thresholds are starting points. Before relying on a rule, measure it on 
 TYPESAFE_API_KEY=... npm run calibrate -- --data eval/datasets/sample.jsonl --config .github/jev-review.yml
 ```
 
-Each JSONL row holds either a `path` and a `patch`, or a `pr` with `title` and `body` for PR-scope rules, plus labels such as `{"sec.sql-concat": {"violates": true, "line": 12}}` where `violates` means the rule should fire (`line_range: [first, last]` accepts any line of a block-level finding). `eval/datasets/pr-description.jsonl` with `--config eval/configs/pr-description.yml` calibrates the PR description preset. The report gives precision and recall at the current threshold, the rows each rule got wrong, a suggested threshold that maximizes F0.5, location accuracy, and a YAML patch. `eval/datasets/sample.jsonl` is a small starter set; aim for at least 30 labeled hunks per rule, including negatives that look similar to the positives. Re-run calibration whenever the pinned model version changes.
+Each JSONL row holds either a `path` and a `patch`, or a `pr` with `title` and `body` for PR-scope rules, plus labels such as `{"sec.sql-concat": {"violates": true, "line": 12}}` where `violates` means the rule should fire (`line_range: [first, last]` accepts any line of a block-level finding). `eval/datasets/pr-description.jsonl` with `--config eval/configs/pr-description.yml` calibrates the PR description preset. Reports use the production decision policy, including confidence: confirmed precision/recall, human review on violations and clean rows, abstentions, preselection coverage, incomplete evaluations and location accuracy. Labels with `expected: insufficient_context` have unknown ground truth and are excluded from precision/recall; a set with no positives has no measurable recall.
+
+`--dump <file.jsonl>` saves every labeled row plus full answers in `<file.jsonl>.answers.json`. Use `--replay <answers.json>` to compare thresholds without new API calls; replay rejects changed models, input state or questions. `--threshold` changes the actual policy threshold; `--no-suggest` disables threshold search. Suggestions maximize F0.5 subject to `--min-precision` (default 0.9), but small samples do not justify enabling a rule. Start with at least 30 labeled hunks per rule, including hard negatives, and keep separate PRs for later validation. Re-run calibration when the model changes. See [maintainability measurements and decisions](eval/maintainability/README.md) for the measured preset.
 
 To try a config on a local change or an existing pull request without posting anything, use the [CLI](#cli), or `npm run review-local` to run it from source:
 

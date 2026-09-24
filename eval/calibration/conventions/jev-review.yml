@@ -1,0 +1,27 @@
+extends:
+  - jev:theming
+  - jev:pattern-matching
+  - jev:type-hygiene
+  - jev:async-state
+model: jev-1.13.0
+vars:
+  style_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.css", "src/renderer-shared/**/*.svelte"]
+  color_exempt_paths: ["**/NotchOverlay.svelte", "**/NotchNotificationRow.svelte", "src/renderer-shared/styles/tokens.css"]
+  theme_token_example: var(--color-accent)
+  matcher_paths: ["src/**/*.ts", "src/**/*.svelte"]
+  matcher_library: ts-pattern
+  typed_paths: ["src/**/*.ts", "src/**/*.svelte"]
+  ui_state_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.svelte.ts", "src/renderer/**/*.ts"]
+files:
+  exclude: ["**/package-lock.json", "out/**", "dist/**", "THIRD-PARTY-NOTICES", "CHANGELOG.md", "**/*.snap"]
+context:
+  include_pr_body: true
+  max_hunk_lines: 80
+rules:
+  # Experiment only: inspect the disabled deterministic rules with their original matchers.
+  - id: theming.hardcoded-color
+    enabled: true
+  - id: matching.switch-statement
+    enabled: true
+  - id: types.any-without-reason
+    enabled: true

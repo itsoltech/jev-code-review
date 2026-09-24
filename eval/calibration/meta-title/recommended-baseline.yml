@@ -1,0 +1,12 @@
+# Historical pre-calibration dimension question; diagnostics only.
+extends: ["jev:recommended"]
+model: jev-1.13.0
+dimensions:
+  - id: change_focus
+    enabled: true
+    instructions: Using `pr` and `files`, how focused is this pull request on a single purpose?
+    criteria:
+      - Unrelated changes across many areas.
+      - Mostly one purpose with several unrelated changes.
+      - One purpose with a small unrelated change.
+      - One clear purpose.

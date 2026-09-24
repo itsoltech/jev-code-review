@@ -263,6 +263,10 @@
             "no_needs_human": {
               "default": true,
               "type": "boolean"
+            },
+            "no_abstentions": {
+              "default": true,
+              "type": "boolean"
             }
           }
         },
@@ -494,6 +498,10 @@
                   "candidate_regex": {
                     "type": "string"
                   },
+                  "candidate_removed": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "when": {
                     "type": "object",
                     "properties": {
@@ -715,6 +723,10 @@
                   "candidate_regex": {
                     "type": "string"
                   },
+                  "candidate_removed": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "when": {
                     "type": "object",
                     "properties": {
@@ -915,6 +927,10 @@
                   "candidate_regex": {
                     "type": "string"
                   },
+                  "candidate_removed": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "when": {
                     "type": "object",
                     "properties": {
@@ -1003,6 +1019,13 @@
                         "minor",
                         "info"
                       ]
+                    }
+                  },
+                  "abstain_labels": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string"
                     }
                   },
                   "threshold": {
@@ -1129,6 +1152,10 @@
                   },
                   "candidate_regex": {
                     "type": "string"
+                  },
+                  "candidate_removed": {
+                    "default": false,
+                    "type": "boolean"
                   },
                   "when": {
                     "type": "object",
@@ -1324,6 +1351,10 @@
                   "candidate_regex": {
                     "type": "string"
                   },
+                  "candidate_removed": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "when": {
                     "type": "object",
                     "properties": {
@@ -1368,6 +1399,10 @@
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "report_existing": {
+                    "default": false,
+                    "type": "boolean"
                   }
                 },
                 "required": [

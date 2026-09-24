@@ -1,6 +1,7 @@
 import type { Question, ScoreCriteria } from "@typesafe-ai/sdk";
 import picomatch from "picomatch";
 import type { Dimension, ModelRule, ResolvedConfig, Rule } from "../config/schema.js";
+import type { Hunk } from "../diff/parse.js";
 import type { ChangedFile, PrInfo, QuestionMeta, Subject } from "../types.js";
 import { parseDescription } from "./state.js";
 
@@ -59,7 +60,11 @@ export function ruleApplies(rule: Rule, subject: Subject): rule is ModelRule {
 
 const candidateCache = new WeakMap<ModelRule, RegExp>();
 
-/** True when the rule has no candidate_regex or an added line of the subject matches it. */
+/**
+ * True when the rule has no candidate_regex or it matches an added line of the subject, a removed
+ * line with candidate_removed, or a run of adjacent added lines joined with newlines: one
+ * expression can span several lines after formatting.
+ */
 export function hasCandidate(rule: ModelRule, subject: Subject): boolean {
   if (!rule.candidate_regex || subject.kind === "pr") return true;
   let re = candidateCache.get(rule);
@@ -68,7 +73,26 @@ export function hasCandidate(rule: ModelRule, subject: Subject): boolean {
     candidateCache.set(rule, re);
   }
   for (const loc of subject.locations.values()) if (re.test(loc.text)) return true;
-  return false;
+  const hunks = subject.kind === "hunk" ? [subject.hunk] : subject.hunks;
+  if (rule.candidate_removed && hunks.some((h) => h.lines.some((l) => l.kind === "del" && re.test(l.text)))) return true;
+  return addedRuns(hunks).some((run) => re.test(run));
+}
+
+/** Runs of two or more added lines with no unchanged line between them (removed lines are not in the new code). */
+function addedRuns(hunks: Hunk[]): string[] {
+  const runs: string[] = [];
+  for (const hunk of hunks) {
+    let run: string[] = [];
+    for (const line of hunk.lines) {
+      if (line.kind === "add") run.push(line.text);
+      else if (line.kind === "context") {
+        if (run.length > 1) runs.push(run.join("\n"));
+        run = [];
+      }
+    }
+    if (run.length > 1) runs.push(run.join("\n"));
+  }
+  return runs;
 }
 
 export function dimensionApplies(dim: Dimension, subject: Subject): boolean {

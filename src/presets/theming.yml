@@ -6,6 +6,7 @@ vars:
 
 rules:
   - id: theming.hardcoded-color
+    enabled: false
     description: 'Hardcoded color instead of a theme token such as {{vars.theme_token_example?}}'
     type: pattern
     field: added_lines

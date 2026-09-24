@@ -1,0 +1,213 @@
+{
+  "dataPath": "eval/calibration/meta-title/focus-holdout.jsonl",
+  "configPath": "eval/calibration/meta-title/recommended-diagnostic.yml",
+  "model": "jev-1.13.0",
+  "returnedModels": [
+    "jev-1.13.0"
+  ],
+  "dimension": {
+    "id": "change_focus",
+    "description": "Pull request stays on one topic",
+    "enabled": true,
+    "scope": "pr",
+    "paths": [
+      "**/*"
+    ],
+    "exclude_paths": [],
+    "weight": 1,
+    "instructions": "Using the PR title, description and changed file paths, judge whether the changes serve one reviewable purpose. Related modules do not make independent goals related: a platform-specific fix and an unrelated agent fix remain two purposes even if both address the same OS. Conversely, a migration across many files, its tests and its dependency cleanup are one purpose. Judge purpose, not number of files or diff size.",
+    "criteria": [
+      "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+      "A main goal with substantial independent work.",
+      "One goal with a small unrelated change.",
+      "All changes support one clear purpose, including necessary tests and cleanup."
+    ],
+    "min_confidence": 0.4
+  },
+  "requests": 5,
+  "inputTokens": 4250,
+  "errors": [],
+  "skippedRequests": [],
+  "results": [
+    {
+      "row": "focus-pr284",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr284:0",
+          "answer": {
+            "type": "score",
+            "score": 3,
+            "confidence": 1,
+            "legend": {
+              "0": "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+              "1": "A main goal with substantial independent work.",
+              "2": "One goal with a small unrelated change.",
+              "3": "All changes support one clear purpose, including necessary tests and cleanup."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "3": 1
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 1,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr285",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr285:0",
+          "answer": {
+            "type": "score",
+            "score": 2.86,
+            "confidence": 0.86,
+            "legend": {
+              "0": "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+              "1": "A main goal with substantial independent work.",
+              "2": "One goal with a small unrelated change.",
+              "3": "All changes support one clear purpose, including necessary tests and cleanup."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.13,
+              "3": 0.87
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.9533333333333333,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr286",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr286:0",
+          "answer": {
+            "type": "score",
+            "score": 2.52,
+            "confidence": 0.52,
+            "legend": {
+              "0": "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+              "1": "A main goal with substantial independent work.",
+              "2": "One goal with a small unrelated change.",
+              "3": "All changes support one clear purpose, including necessary tests and cleanup."
+            },
+            "probabilities": {
+              "0": 0.11,
+              "1": 0.01,
+              "2": 0.15,
+              "3": 0.73
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.84,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr287",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr287:0",
+          "answer": {
+            "type": "score",
+            "score": 2.99,
+            "confidence": 0.99,
+            "legend": {
+              "0": "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+              "1": "A main goal with substantial independent work.",
+              "2": "One goal with a small unrelated change.",
+              "3": "All changes support one clear purpose, including necessary tests and cleanup."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.01,
+              "3": 0.99
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [
+        {
+          "path": "package-lock.json",
+          "reason": "excluded"
+        }
+      ],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.9966666666666667,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr289",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr289:0",
+          "answer": {
+            "type": "score",
+            "score": 3,
+            "confidence": 1,
+            "legend": {
+              "0": "Two or more independent goals that should be reviewed separately, even if they share a platform or component.",
+              "1": "A main goal with substantial independent work.",
+              "2": "One goal with a small unrelated change.",
+              "3": "All changes support one clear purpose, including necessary tests and cleanup."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "3": 1
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 1,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    }
+  ]
+}

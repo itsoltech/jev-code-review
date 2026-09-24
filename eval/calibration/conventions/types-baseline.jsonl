@@ -1,0 +1,10 @@
+{"row":"types-pr14-033","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr344-034","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr344-035","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr37-036","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr129-037","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr3-038","rule":"types.any-without-reason","truth":false,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr344-039","rule":"types.any-without-reason","truth":true,"status":"confirmed","score":1,"line":34,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr33-040","rule":"types.any-without-reason","truth":true,"status":"confirmed","score":1,"line":17,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr33-041","rule":"types.any-without-reason","truth":true,"status":"confirmed","score":1,"line":108,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}
+{"row":"types-pr3-042","rule":"types.any-without-reason","truth":true,"status":"clear","score":0,"selected":0,"answered":0,"missing":0,"filtered":[],"observations":[]}

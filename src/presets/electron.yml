@@ -9,7 +9,7 @@ vars:
   # feature:action, optionally with more segments (db:prefs:set)
   ipc_channel_pattern: '[a-z][a-zA-Z0-9-]*(:[a-z][a-zA-Z0-9-]*)+'
   # Lines that choose a label per platform are fine.
-  platform_guard_regex: 'isMac|isWindows|platform|darwin|win32|linux|modKey|modifierLabel|accelerator'
+  platform_guard_regex: 'isMac|isWindows|darwin|win32|linux|modKey|modifierLabel|accelerator'
 
 rules:
   - id: electron.renderer-node-import

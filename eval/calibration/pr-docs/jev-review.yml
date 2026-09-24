@@ -1,0 +1,10 @@
+extends: ["jev:pr-template", "jev:pr-description", "jev:docs-sync"]
+model: jev-1.13.0
+context:
+  include_pr_body: true
+rules:
+  # Measurement only: both patterns are disabled in the shipped preset.
+  - id: docs.new-ipc-without-docs
+    enabled: true
+  - id: docs.new-error-variant-without-docs
+    enabled: true

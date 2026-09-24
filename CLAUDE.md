@@ -36,7 +36,7 @@ Everything external goes through two ports, `GitHubPort` (`src/ports.ts`, Octoki
 
 ## Rules and presets
 
-- Presets live in `src/presets/*.yml` and must be registered in `src/presets/index.ts`. Rule ids are generic (`sec.*`, `corr.*`, `slop.*`, `electron.*`, `svelte5.*`), never named after a project; project conventions enter through `vars` and `context.project_notes`, as in `examples/canopy/jev-review.yml`.
+- Presets live in `src/presets/*.yml` and must be registered in `src/presets/index.ts`. Rule ids are generic (`sec.*`, `corr.*`, `slop.*`, `maint.*`, `electron.*`, `svelte5.*`), never named after a project; project conventions enter through `vars` and `context.project_notes`, as in `examples/canopy/jev-review.yml`.
 - Rule text is for Jev: English, literal, one narrow judgment per question, with concrete `criteria` for true and false. Question keys are not sent to the model, so the instructions must carry the full meaning. Jev cannot count; counting belongs in code (`state.ts` stats, `pattern`, `file_lines`).
 - When a project's review history shows an established rule, the preset must detect and block violations of it; do not add exceptions that let the model excuse them.
 - Measure every rule change with `npm run calibrate` on labeled rows in `eval/datasets/` (JSONL: `path` + `patch` or `pr`, labels `{violates, line | line_range}`), including negatives that look like positives. A rule blocks only at precision ≥ 90%. `eval/canopy/` holds the scripts and hand labels built from canopy-desktop; its builders redact private names on write.

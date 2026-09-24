@@ -1,0 +1,35 @@
+extends:
+  - jev:result-errors
+  - jev:electron
+  - jev:svelte5
+model: jev-1.13.0
+vars:
+  main_paths: ["src/main/**"]
+  renderer_paths: ["src/renderer/**"]
+  preload_paths: ["src/preload/**"]
+  menu_paths: ["src/main/menu/**"]
+  sync_fs_paths: ["src/main/**"]
+  platform_specific_paths: ["src/renderer/src/components/TitlebarMenu.svelte"]
+  input_validators: ["validatePathAccess()", "validateCreationPath()", "validateWorktreeScopedPathAccess()", "validateFilePath()", "an allowlist check"]
+  svelte_paths: ["src/renderer/**/*.svelte", "src/renderer/**/*.svelte.ts"]
+  svelte_component_paths: ["src/renderer/**/*.svelte"]
+  max_component_lines: "300"
+  pure_reads: "Calls to get...() functions such as getToolView() or getTrackerCredentials() only read reactive store state and have no side effects."
+  result_paths: ["src/main/**/*.ts"]
+  test_paths: ["src/main/**/*.test.ts"]
+  result_scope: main-process
+  result_type: a neverthrow Result or ResultAsync
+  error_constructor: err(...)
+  external_call_wrapper: fromExternalCall()
+  allowed_try_catch:
+    - killing or cleaning up a PTY or child process
+    - parsing an HTTP request body
+    - JSON.parse of untrusted text
+    - contextBridge initialization
+    - deleting files the code created (rm, unlink) as cleanup
+  try_catch_violation_examples: ["fetch()", "readFile()", "stat()", "realpath()", "access()", "a git or gh command", "decryptString()", "new URL()", "YAML parsing", "closing a view or server"]
+  try_catch_note: Crash reporter code and IPC handlers are not exceptions.
+context:
+  max_hunk_lines: 80
+budget:
+  concurrency: 8

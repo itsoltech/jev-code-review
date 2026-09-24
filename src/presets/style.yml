@@ -1,6 +1,7 @@
 rules:
   - id: style.naming
     description: Unclear or misleading names in added code
+    enabled: false
     type: score
     severity: minor
     instructions: How clear are the names of variables, functions and types introduced in the added lines (marked "+") of `changes.lines`?

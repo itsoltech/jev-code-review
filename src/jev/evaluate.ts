@@ -94,11 +94,17 @@ export function splitRequest(req: PlannedRequest): [PlannedRequest, PlannedReque
   return [make(entries.slice(0, half)), make(entries.slice(half))];
 }
 
-const defaultSleep = (ms: number, signal: AbortSignal) =>
+export const defaultSleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
     if (signal.aborted) return resolve();
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener("abort", () => (clearTimeout(timer), resolve()), { once: true });
+    // One exit for both ends, so a finished wait does not leave its listener on a long-lived signal.
+    const finish = () => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", finish);
+      resolve();
+    };
+    const timer = setTimeout(finish, ms);
+    signal.addEventListener("abort", finish, { once: true });
   });
 
 /**

@@ -1,0 +1,6 @@
+{
+  "source": "itsoltech/canopy-desktop merged PRs, locally fetched in /tmp/canopy-data/prs_full.json and /tmp/canopy-data/pr_files.json",
+  "reserved_before_new_calibration": [284, 285, 286, 287, 289],
+  "use": "Do not use these PRs to tune questions, regexes, thresholds or labels. Label their relevant changed code and PR text independently before measuring final policy. Report counts per rule and missing positives explicitly.",
+  "limitations": "This is a reserved validation slice for this calibration, not a fully blind prospective test set: canopy PR titles and descriptions already occur in eval/datasets/canopy-pr.jsonl, and some preset prompts were tuned on earlier canopy data. No future-error-rate guarantee follows."
+}

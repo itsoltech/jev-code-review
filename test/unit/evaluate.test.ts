@@ -1,7 +1,8 @@
 import { APITimeoutError, BadRequestError, InternalServerError, PermissionDeniedError, RateLimitError } from "@typesafe-ai/sdk";
 import { describe, expect, it } from "vitest";
 import { estimateTokens, packQuestions, type PlannedRequest } from "../../src/jev/batch.js";
-import { blockedMessage, classifyFailure, emptyEvaluation, evaluate, type JevPort } from "../../src/jev/evaluate.js";
+import { getEventListeners } from "node:events";
+import { blockedMessage, classifyFailure, defaultSleep, emptyEvaluation, evaluate, type JevPort } from "../../src/jev/evaluate.js";
 import { hunk } from "../helpers/factories.js";
 
 const noul = { type: "noul" as const, instructions: "x" };
@@ -22,6 +23,23 @@ describe("classifyFailure", () => {
     expect(classifyFailure(new BadRequestError(400, {}, headers, "context length exceeded"))).toBe("too_large");
     expect(classifyFailure(new PermissionDeniedError(403, {}, headers, "<!DOCTYPE html>"))).toBe("blocked");
     expect(classifyFailure(new Error("bug"))).toBe("fatal");
+  });
+});
+
+describe("defaultSleep", () => {
+  it("removes its abort listener when the wait ends normally", async () => {
+    const controller = new AbortController();
+    for (let i = 0; i < 3; i++) await defaultSleep(1, controller.signal);
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+  });
+
+  it("ends early on abort and resolves at once on an aborted signal", async () => {
+    const controller = new AbortController();
+    const waiting = defaultSleep(60_000, controller.signal);
+    controller.abort();
+    await waiting;
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+    await defaultSleep(60_000, controller.signal);
   });
 });
 

@@ -1,0 +1,9 @@
+{
+  "note": "Code the canopy review bot flagged; each window is read from the commit it commented on. Checked against the rule text by hand.",
+  "items": [
+    {"comment": 3005850083, "pr": 14, "path": "e2e/fixtures.ts", "commit": "19fbd465a852f4bee1c99ef0630c1a55fbf62a12", "start": 79, "end": 94, "rule": "maint.magic-delay", "label": "violation", "line_text": "await page.waitForTimeout(500)", "reason": "Waits 500 ms for Svelte effects to register the url:action listener, then sends the IPC; nothing checks the listener exists."},
+    {"comment": 3005864176, "pr": 14, "path": "e2e/settings.spec.ts", "commit": "bce7e3965ff496aa9fde6916794f900ed7bf330b", "start": 330, "end": 344, "rule": "maint.magic-delay", "label": "violation", "line_text": "await page.waitForTimeout(100)", "reason": "Waits 100 ms for the input handler to persist the pref, then reads it instead of waiting for the stored value."},
+    {"comment": 3004849411, "pr": 9, "path": "src/renderer/src/components/terminal/TabBar.svelte", "commit": "4d27577fcf72452653dc6c69d4fb2f64389caf3a", "start": 96, "end": 150, "rule": "maint.resource-lifetime", "label": "violation", "line_text": "window.addEventListener('pointermove', handleDragMove)", "reason": "Window listeners are removed only in handleDragEnd; unmounting mid-drag leaves them registered."},
+    {"comment": 3006651405, "pr": 19, "path": "src/renderer/src/components/preferences/UpdatePrefs.svelte", "commit": "3c10ffa4267a40667feb4f2e000c2854d71ca823", "start": 21, "end": 50, "rule": "maint.resource-lifetime", "label": "violation", "line_text": "const offAvailable = window.api.onUpdateAvailable(() => {", "reason": "Subscriptions are released only when an update event fires; closing preferences before that leaves them, and each click adds three more."}
+  ]
+}

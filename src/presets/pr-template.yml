@@ -1,5 +1,8 @@
 # A PR template with What and Why sections and a checklist. Section presence is checked in
 # code; Jev only judges the text of sections that exist.
+context:
+  include_pr_body: true
+
 vars:
   what_heading: what
   why_heading: why

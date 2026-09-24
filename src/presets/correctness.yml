@@ -19,10 +19,11 @@ rules:
     instructions: >-
       Do the added lines (marked "+") in `changes.lines` contain temporary debugging code, such
       as console.log or print calls with debug text, debugger statements, dbg!, var_dump or
-      breakpoints?
+      breakpoints? A console.log that emits a fixed protocol marker consumed by another component
+      is application messaging, not debug output.
     criteria:
       true: An added line looks like temporary debugging output or a breakpoint.
-      false: Output goes through the project's logger or is intended program output, or there is none.
+      false: Output goes through the project's logger, is intended program output or a fixed inter-component protocol marker, or there is none.
   - id: corr.floating-promise
     description: Promise-returning call not awaited or handled
     type: noul

@@ -15,19 +15,27 @@ rules:
     type: noul
     severity: major
     paths: ["{{vars.ui_state_paths}}"]
+    # Needs human confirmation: observed high scores are too few to justify blocking.
+    threshold: 1
+    needs_human_band: [0.6, 1]
     instructions: >-
-      Does an added async function or promise callback in `changes.lines` start a request
-      from an input that can change while it waits (a selected path, id, key, query, form
-      field or prop), and after the await write the result into component or store state
-      without first checking that the result is still current, for example with
-      {{vars.staleness_guards}}?
+      Does an added async function or promise callback start a request using an input that
+      can change while it waits (a selected path, id, key, query, form field, prop or store
+      value), then write that request's result into shared component or store state without
+      checking after the await that the result still belongs to the current input?
+      A generation counter or cancellation check must protect the result write itself:
+      a check only in `finally` around a loading flag does not protect earlier writes.
+      {{vars.staleness_guards}}
     criteria:
       true: >-
-        For example `const diff = await api.gitDiff(worktreePath); files = diff.files` where
-        worktreePath can change, or `preview = await render(templateInput)` while the user keeps
-        typing, with no check after the await. {{vars.changing_inputs?}}
+        For example, an awaited diff for the old worktree overwrites the selected worktree's
+        files, a refreshed list overwrites results for a newer query, or a save for a former
+        repo writes its config into the currently selected repo's global state. An `initialized`
+        flag does not prevent a later subscription callback racing an earlier one.
+        {{vars.changing_inputs?}}
       false: >-
-        No such write, or the write is guarded; results are stored keyed by their input
-        (cache[path] = result); the inputs cannot change during the call (fixed props of a
-        dialog, a one-time init); the function is a single user action (save, delete, test a
-        connection); or only busy flags, toasts or error messages change after the await.
+        No result write; every result write is protected by a post-await currency check;
+        results are stored keyed by the request's captured input (cache[path] = result);
+        the input cannot change during the call (fixed dialog props or one-time init);
+        a single user action changes only its own action state rather than selected-input
+        data; or only busy flags, toasts or error messages change after the await.

@@ -85,6 +85,10 @@ export function renderSummary(report: ReviewReport, inline: Set<string>): string
   if (byBlock) coverage.push(`- ${byBlock} request(s) skipped: the same content was already blocked (see errors)`);
   if (byTimeout) coverage.push(`- ${byTimeout} request(s) skipped: budget.run_timeout_seconds reached`);
   if (health.oversizedQuestions) coverage.push(`- ${health.oversizedQuestions} question(s) too large for the token limits`);
+  if (health.abstentions?.length) {
+    const rules = [...new Set(health.abstentions)].map((id) => inlineCode(id)).join(", ");
+    coverage.push(`- ${health.abstentions.length} rule check(s) answered without enough context: ${rules}`);
+  }
   if (report.errors.length) coverage.push(...report.errors.slice(0, 10).map((e) => `- error: ${e.replace(/[<>]/g, "")}`));
   if (coverage.length) {
     lines.push("", `<details><summary>Not fully reviewed (${coverage.length})</summary>`, "", ...coverage, "", "</details>");

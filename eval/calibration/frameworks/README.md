@@ -1,0 +1,53 @@
+# Framework preset calibration (2026-09-24)
+
+Scope: `jev:result-errors` (2 rules), `jev:electron` (8), `jev:svelte5` (4); Jev `jev-1.13.0`. The isolated config extends **only these three presets** and copies relevant public canopy conventions from `examples/canopy/jev-review.yml` (main/renderer/preload paths, path validators, permitted main-process catch boundaries, pure Svelte reads). It does not measure any other preset or any composite dimensions. No rule is disabled: the four semantic checks retain the 0.7 confirmed threshold and the default 0.4–0.7 human band; exact pattern/line-count checks are automatic by construction. "Auto" below means *only a confirmed finding*, not that ambiguous model answers block automatically. Canopy's example policy requests changes even for minor findings, so observed tuning-set precision is not a prospective guarantee of safe blocking.
+
+## Provenance and boundary
+
+`build.py` selects source hunks from the public `/tmp/canopy-data/pr_files.json` and **existing human labels** from `eval/datasets/canopy-code.jsonl`. Of 157 training rows, **111 are unmodified original public changes** and **46 are explicitly identified mutations** of those changes: 31 already marked `synthetic` in `canopy-code.jsonl`, and 15 constructed in this directory. Mutations are not historical violations. Selection favors short, distinct-PR labeled hunks and hard negatives rather than a random or unbiased sample of all code. The 13 try/catch negatives include an allowed JSON.parse catch; IPC negatives include `validatePathAccess()` and handlers that do not pass an input to a sensitive operation. Svelte negatives include effects with valid cleanup and effects with actual side effects. Platform negatives include a `darwin`/`win32` mapping, an `isMac` shortcut conditional, and the combined `Cmd/Ctrl+S` label. The component-size rows reconstruct *complete newly added files* (350, 336, 289, 256 lines), not truncated hunks.
+
+`eval/preset-holdout.json` reserved PRs **284, 285, 286, 287, 289** before this tuning. I read their code and fixed rule-specific all-negative labels before examining any framework calibration outcome: 284 touches only `package.json` and has no applicable framework rule; 285 changes task-error presentation, 286 changes Windows path equivalence, and 287/289 change icon imports. The PR titles already appeared in `eval/datasets/canopy-pr.jsonl` and earlier presets used other canopy data, so this is **not fully blind prospective validation**. The builder briefly omitted the `path`/`patch`/`labels` fields while moving a function: the first attempted holdout run crashed before any model call or output; I restored the originally specified all-negative labels before the successful validation. Neither this failed attempt nor its correction informed any policy change. There are **zero labeled holdout positives**, so holdout recall and confirmed precision are undefined for every rule.
+
+## Diagnosis, change, remeasurement
+
+The first live baseline (103 rows; `train-baseline.answers.json`) had zero confirmed false positives and human-reviewed ambiguous try/catch and Svelte effects. Expanded live baseline (156 rows, 110 requests, 120,326 input tokens; `train-expanded.answers.json`) retained zero confirmed FP; three `effect-as-derived` positives were human-reviewed, not missed, including a preference reader and a derived filter with selection reset. Git watcher catch restructuring and IPC wrapper delegation similarly sat in the human band. Raising or lowering the 0.7 threshold to force these decisions would confuse uncertain cross-file semantics with high-confidence findings. Leave model instructions/thresholds unchanged. Exact-location checks succeeded 14/14 on the annotated confirmed try/catch cases and 14/14 on annotated cleanup cases; other rules' labels did not establish location accuracy.
+
+One upstream `effect-as-derived` positive (`train-effect-derived-pr183-QuickOpen-37`) also resets `selectedIndex`; that reset might be intentional interactive state rather than pure derivation. Its 0.59 answer stayed human, and I retained the preexisting label rather than relabeling a difficult example after seeing its score. Re-review it with an independent reader before treating that rule's apparent recall as settled.
+
+Manual inspection of the platform formatter found a concrete false **negative**: `platform_guard_regex` matched the mere word `platform` on an unguarded default-label line, silently hiding an OS-exclusive label. A real-code-based mutation of PR 98's `.otherwise(() => 'Open in File Manager')` to `.otherwise(() => 'Reveal in Finder') // platform-neutral fallback` was correctly labeled positive. The prerevision replay (`train-platform-before`) confirmed 2/3 and missed that case, with 0 FP. Removed only the generic `platform` alternative from the guard regex in `src/presets/electron.yml`, preserving `isMac|isWindows|darwin|win32|linux|modKey|modifierLabel|accelerator`. Final replay (`train-final`, 157 rows) confirms 3/3 with 0 FP; the real `darwin`/`win32` map stays clear. This was a **policy-only deterministic regex change**, not a model prompt change; replay used an identical request fingerprint and no new API call. The dataset builder was also repaired to make legacy `$props` → `export let` and fixed-channel → caller-chosen-channel mutations syntactically coherent. Those deterministic corrections do not alter model requests.
+
+## Final measured decisions
+
+`P/N` are labeled training positives/negatives; `TP/FP` are **confirmed** predictions, `PH/M` are positive human/missed, `CH` is clean human. All rules have zero incomplete rows, zero abstentions and selected **all** labeled training positives. There were 157 distinct rows and 157 row/rule labels. `Original TP/P` distinguishes confirmed and total positives from unmodified original PR code; mutations include those already marked `synthetic` in the upstream dataset. Holdout is `N: FP/CH` (all positives zero), except `n/a` where no scoped fixture is usable.
+
+| Rule | Decision | Train P/N | TP/FP | PH/M | CH | Original TP/P | Holdout N: FP/CH |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `errors.try-catch-outside-boundaries` | auto / uncertain → human | 15/13 | 14/0 | 1/0 | 1 | 14/15 | 1: 0/0 |
+| `errors.throw-new-error` | auto (literal) | 3/1 | 3/0 | 0/0 | 0 | 3/3 | 1: 0/0 |
+| `electron.renderer-node-import` | auto (literal; mutation-only positives) | 3/2 | 3/0 | 0/0 | 0 | 0/0 | 24: 0/0 |
+| `electron.os-specific-label` | auto (pattern; mutation-only positives) | 3/2 | 3/0 | 0/0 | 0 | 0/0 | 24: 0/0 |
+| `electron.ipc-send-on` | auto (literal) | 3/1 | 3/0 | 0/0 | 0 | 3/3 | 25: 0/0 |
+| `electron.ipc-channel-name` | auto (pattern; mutation-only positives) | 3/3 | 3/0 | 0/0 | 0 | 0/0 | 1: 0/0 |
+| `electron.preload-generic-invoke` | auto (pattern; mutation-only positives) | 3/3 | 3/0 | 0/0 | 0 | 0/0 | n/a: reserved PRs do not touch preload |
+| `electron.sync-fs-main` | auto (literal) | 3/1 | 3/0 | 0/0 | 0 | 3/3 | 1: 0/0 |
+| `electron.shortcut-label-os` | auto (pattern) | 2/3 | 2/0 | 0/0 | 0 | 1/1 | 24: 0/0 |
+| `electron.ipc-unvalidated-input` | auto / uncertain → human | 12/11 | 11/0 | 1/0 | 1 | 6/6 | 1: 0/0 |
+| `svelte.effect-without-cleanup` | auto / uncertain → human (mutation-only positives) | 15/15 | 14/0 | 1/0 | 0 | 0/0 | 20: 0/0 |
+| `svelte.legacy-export-let` | auto (literal; mutation-only positives) | 2/2 | 2/0 | 0/0 | 0 | 0/0 | 20: 0/0 |
+| `svelte.component-size` | auto (exact file count) | 2/2 | 2/0 | 0/0 | 0 | 2/2 | n/a: modified component head texts unavailable; no complete file to count |
+| `svelte.effect-as-derived` | auto / uncertain → human | 14/15 | 11/0 | 3/0 | 0 | 2/4 | 20: 0/0 |
+
+The deterministic-only patterns have no human band. Although the four model rules' *observed* confirmed precision is 100%, only the try/catch and IPC-input samples have more than two confirmed **original** positives; missing-cleanup has **none**. Thus neither all-model training precision nor 2–3 deterministic positives, especially mutation-only, establishes a future 90% precision guarantee. The synthesized pairs check concrete invariants and near misses rather than unbiased production error rates. We did not promote any severity or lower thresholds to increase automatic findings. No positive appeared in the frozen validation slice; absence is **not** recall evidence. The 25 reserved scoped rows yielded 162 negative row/rule judgments with zero FP, zero clean human and zero incomplete evaluations. No applicable framework label exists for PR 284.
+
+## Reproduction and saved answers
+
+Requires Node/npm, Python 3, the public downloaded `/tmp/canopy-data/pr_files.json` (see `eval/canopy/fetch_data.py`), and `TYPESAFE_API_KEY` for new live evaluations. Never substitute holdout rows into the tuning dataset.
+
+```sh
+python3 eval/calibration/frameworks/build.py
+npm run calibrate -- --data eval/calibration/frameworks/train.jsonl --config eval/calibration/frameworks/jev-review.yml --dump eval/calibration/frameworks/train-expanded --no-suggest
+npm run calibrate -- --data eval/calibration/frameworks/train.jsonl --config eval/calibration/frameworks/jev-review.yml --replay eval/calibration/frameworks/train-expanded.answers.json --dump eval/calibration/frameworks/train-final --no-suggest
+npm run calibrate -- --data eval/calibration/frameworks/holdout.jsonl --config eval/calibration/frameworks/jev-review.yml --dump eval/calibration/frameworks/holdout-final --no-suggest
+```
+
+The `train-expanded.answers.json` replay fingerprint covers identical *model requests*, so editing model text or state requires a fresh live API run; changing deterministic policy alone permits replay. A new live run can disagree slightly because model responses vary: the first 103-row run scored the Git watcher catch 0.59, the expanded run 0.64 (both human). Saved reports/data/config/row outcomes/full raw answers are in this directory: `train-baseline*`, `train-expanded*` (live before extra deterministic mutation), `train-platform-before*` (prerevision replay), `train-final*` (postrevision replay), `holdout-final*` (live), `train.jsonl`, `holdout.jsonl`, `jev-review.yml`. Also see generated Markdown under `eval/reports/calibration-2026-09-24T064353.252Z.md`, `calibration-2026-09-24T064625.031Z.md`, `calibration-2026-09-24T064852.521Z.md`, `calibration-2026-09-24T064905.299Z.md`, and `calibration-2026-09-24T064947.376Z.md`. In both final runs, API errors, skipped requests and incomplete rows were zero; no project-wide build/lint/tests/typecheck/formatter was run by this calibration worker.

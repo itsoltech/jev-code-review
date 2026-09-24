@@ -1,5 +1,6 @@
 rules:
   - id: tests.missing
+    enabled: false
     description: Behavior changed without test changes
     type: noul
     scope: pr

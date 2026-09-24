@@ -15,6 +15,8 @@ export interface RunHealth {
   splits?: number;
   /** Questions dropped because the state left no room for them. */
   oversizedQuestions: number;
+  /** Rule ids of choice verdicts answered with an abstain label, one per question. */
+  abstentions?: string[];
   skippedFiles: SkippedFile[];
 }
 
@@ -98,6 +100,8 @@ function approveBlockers(
   if (health.oversizedQuestions) out.push(`${health.oversizedQuestions} question(s) did not fit the token limits`);
   const notReviewed = unreviewed(health);
   if (notReviewed.length) out.push(`${notReviewed.length} file(s) not reviewed`);
+  const abstained = health.abstentions?.length ?? 0;
+  if (approve.no_abstentions && abstained) out.push(`${abstained} rule check(s) without enough context`);
   if (guardHits) out.push("injection guard fired");
   if (approve.no_needs_human && findings.some((f) => f.status === "needs_human")) out.push("uncertain findings");
   for (const [severity, max] of Object.entries(approve.max_findings) as [Severity, number][]) {

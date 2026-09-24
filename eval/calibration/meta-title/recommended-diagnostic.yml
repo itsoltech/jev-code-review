@@ -1,0 +1,6 @@
+# Experimental scoring of the shipped-disabled focus dimension, not production policy.
+extends: ["jev:recommended"]
+model: jev-1.13.0
+dimensions:
+  - id: change_focus
+    enabled: true

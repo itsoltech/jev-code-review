@@ -1,0 +1,6 @@
+# Experimental scoring of the shipped-disabled naming rule, not production policy.
+extends: ["jev:style"]
+model: jev-1.13.0
+rules:
+  - id: style.naming
+    enabled: true

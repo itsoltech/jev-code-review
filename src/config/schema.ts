@@ -36,6 +36,8 @@ const ruleBase = {
    * candidates; the model judges them.
    */
   candidate_regex: z.string().refine((r) => { try { new RegExp(r); return true; } catch { return false; } }, "invalid regular expression").optional(),
+  /** Also match candidate_regex against removed lines, for rules about what a change takes away. */
+  candidate_removed: z.boolean().default(false),
   /** Ask the rule only when these hold (checked in code before any request). */
   when: z
     .object({
@@ -84,6 +86,11 @@ export const ChoiceRule = z.object({
     .refine((c) => Object.keys(c).length >= 2 && Object.keys(c).length <= 255, "2 to 255 options"),
   /** Options that count as findings, with their severity. Other options are fine. */
   finding_labels: z.record(z.string(), Severity),
+  /**
+   * Options that mean the rule could not be judged (e.g. insufficient_context). Not findings, but
+   * counted as incomplete review: they block approval while policy.approve.no_abstentions is on.
+   */
+  abstain_labels: z.array(z.string()).default([]),
   /** Probability of the finding label at or above this is a confirmed finding. */
   threshold: Probability.default(0.6),
 });
@@ -123,7 +130,10 @@ function isValidRegex(source: string): boolean {
   }
 }
 
-/** Files that grow past a line limit, counted in code from the file at the PR head. */
+/**
+ * Files over a line limit, counted in code from the file at the PR head. By default only a file the
+ * PR makes worse is reported: new, crossing the limit, or growing while over it.
+ */
 export const FileLinesRule = z.object({
   ...ruleBase,
   type: z.literal("file_lines"),
@@ -132,6 +142,8 @@ export const FileLinesRule = z.object({
   instructions: Entry.optional(),
   /** Accepts a number or a {{vars.x}} string. */
   max_lines: z.coerce.number().int().positive(),
+  /** Also report files that were already over the limit and did not grow. */
+  report_existing: z.boolean().default(false),
 });
 
 export const Rule = z.discriminatedUnion("type", [NoulRule, ScoreRule, ChoiceRule, PatternRule, FileLinesRule]);
@@ -240,6 +252,8 @@ export const Settings = z.object({
           max_findings: z.partialRecord(Severity, z.number().int().min(0)).default({ blocker: 0, major: 0 }),
           composite_at_least: Probability.default(0.8),
           no_needs_human: z.boolean().default(true),
+          /** Do not approve when a choice rule answered one of its abstain_labels. */
+          no_abstentions: z.boolean().default(true),
         })
         .prefault({}),
       fail_check: z

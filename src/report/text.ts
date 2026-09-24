@@ -30,6 +30,7 @@ export function renderText(report: ReviewReport): string {
   const notReviewed = unreviewed(health);
   if (notReviewed.length) lines.push(`Not reviewed: ${notReviewed.map((f) => `${f.path} (${f.reason.replace("_", " ")})`).join(", ")}`);
   if (health.skippedRequests) lines.push(`Skipped requests: ${health.skippedRequests}`);
+  if (health.abstentions?.length) lines.push(`Without enough context: ${[...new Set(health.abstentions)].join(", ")} (${health.abstentions.length})`);
   for (const e of report.errors) lines.push(`error: ${e}`);
   lines.push(`Model ${report.models.join(", ") || "none"} · ${report.requests} request(s) · ${report.inputTokens.toLocaleString("en-US")} input tokens`);
   return lines.join("\n");
@@ -52,6 +53,8 @@ export function reportJson(report: ReviewReport) {
       location: f.location,
       fingerprint: f.fingerprint,
     })),
+    /** Rule ids of checks answered without enough context, one per question. */
+    abstentions: report.health.abstentions ?? [],
     errors: report.errors,
     warnings: report.warnings,
     models: report.models,

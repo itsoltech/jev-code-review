@@ -2,6 +2,17 @@
 
 Evaluation data built from [itsoltech/canopy-desktop](https://github.com/itsoltech/canopy-desktop): 268 merged PRs, 2,058 inline review comments (1,165 from the Claude review bot, the rest from people) and 1,359 PR conversation comments, fetched on 2026-09-23. The config under test is [examples/canopy/jev-review.yml](../../examples/canopy/jev-review.yml). It contains no rules of its own: it extends built-in presets and sets canopy's conventions as `vars` (paths, the try/catch allowed list, path validators, prefixes). Canopy serves as a test ground; [eval/control](../control) applies the same presets to a project with different conventions.
 
+The dataset builders require a private JSON redaction map at
+`/tmp/canopy-data/redactions.json` (or `EVAL_REDACTIONS_FILE`). It maps raw
+project names and company-specific CI/tracker hosts to publishable example
+values; keep it outside this repository. Builders fail rather than write raw
+PR data when the map is missing. Generated datasets contain only the
+substituted values; public Canopy identifiers are retained.
+
+For example, the file format is `{"<private-project-name>": "ExampleProject",
+"<private-ci-host>": "ci.example.test"}`; add every private identifier in the
+raw snapshots before generating publishable data.
+
 ## What canopy already checks
 
 | Check | How | Blocks merge |

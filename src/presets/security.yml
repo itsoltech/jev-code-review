@@ -53,12 +53,14 @@ rules:
       Does any added line (marked "+") in `changes.lines` insert a variable into HTML without
       escaping, for example through innerHTML, outerHTML, document.write,
       dangerouslySetInnerHTML, v-html, {@html} or a template "safe"/"raw" filter?
+      Check whether the value reaching the sink is actually sanitized; a nearby comment
+      claiming sanitization does not sanitize a different value.
     criteria:
-      true: A variable is written as raw HTML by one of these mechanisms and the added lines do not show it being sanitized.
+      true: A variable is written as raw HTML by one of these mechanisms without sanitization of that value.
       false: >-
-        Dynamic values are rendered as text or through the framework's escaping, or the HTML
-        is sanitized (DOMPurify.sanitize, sanitize-html, a sanitizer function, or a comment
-        saying it is sanitized).
+        Dynamic values are rendered as text or through the framework's escaping, or the value
+        reaching the raw HTML sink is sanitized (DOMPurify.sanitize, sanitize-html or an
+        established sanitizer function). A nearby comment by itself is not a sanitizer.
   - id: sec.tls-verification-off
     description: TLS certificate verification disabled
     type: noul

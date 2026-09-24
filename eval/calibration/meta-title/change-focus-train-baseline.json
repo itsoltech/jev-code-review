@@ -1,0 +1,275 @@
+{
+  "dataPath": "eval/calibration/meta-title/focus-train.jsonl",
+  "configPath": "eval/calibration/meta-title/recommended-baseline.yml",
+  "model": "jev-1.13.0",
+  "returnedModels": [
+    "jev-1.13.0"
+  ],
+  "dimension": {
+    "id": "change_focus",
+    "description": "Pull request stays on one topic",
+    "enabled": true,
+    "scope": "pr",
+    "paths": [
+      "**/*"
+    ],
+    "exclude_paths": [],
+    "weight": 1,
+    "instructions": "Using `pr` and `files`, how focused is this pull request on a single purpose?",
+    "criteria": [
+      "Unrelated changes across many areas.",
+      "Mostly one purpose with several unrelated changes.",
+      "One purpose with a small unrelated change.",
+      "One clear purpose."
+    ],
+    "min_confidence": 0.4
+  },
+  "fingerprint": "41ffe80365ea10c57a6af0da4d65d5e6a6b47c3788c6a5955f05767a7c395588",
+  "fingerprints": {
+    "focus-pr55": "73a0ed2c4b741b4d8568685bcac7a9423bd8bf2a4ae27b8e877ffc8b6fab1702",
+    "focus-pr60": "e73b19f8860b9a4bba7abe268a0e83ff18d79414ea4605890b49f80122aaddae",
+    "focus-pr66": "42db2ce8ed8b238836ceae7c11fba01cd9e6d77330ce84d58d500d73939e1d9b",
+    "focus-pr149": "d25fe83c377fdc595757620503039a1e5f555babdd6b05e12f5fec3d31bd7403",
+    "focus-pr262": "8cd0233e1310c7a35cbd22efed5c948167389b2bb2fe6bc80aceefbafe6c86fd",
+    "focus-pr3": "8e3e6885bf691e1c0d816f9ce6a3706abcaa0c8107735c3bb0b889db5209ca5b"
+  },
+  "requests": 6,
+  "inputTokens": 10070,
+  "errors": [],
+  "skippedRequests": [],
+  "results": [
+    {
+      "row": "focus-pr55",
+      "expected": 1,
+      "answers": [
+        {
+          "key": "dim:focus-pr55:0",
+          "answer": {
+            "type": "score",
+            "score": 2.61,
+            "confidence": 0.61,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0.01,
+              "1": 0.14,
+              "2": 0.08,
+              "3": 0.77
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [
+        {
+          "path": "src/renderer/src/components/browser/BrowserPane.svelte",
+          "reason": "too_large"
+        }
+      ],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.87,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr60",
+      "expected": 1,
+      "answers": [
+        {
+          "key": "dim:focus-pr60:0",
+          "answer": {
+            "type": "score",
+            "score": 2.9,
+            "confidence": 0.9,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.09,
+              "3": 0.9
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.9666666666666667,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr66",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr66:0",
+          "answer": {
+            "type": "score",
+            "score": 2.9,
+            "confidence": 0.9,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.09,
+              "3": 0.91
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.9666666666666667,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr149",
+      "expected": 1,
+      "answers": [
+        {
+          "key": "dim:focus-pr149:0",
+          "answer": {
+            "type": "score",
+            "score": 2.39,
+            "confidence": 0.39,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.13,
+              "2": 0.34,
+              "3": 0.53
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [
+        {
+          "path": "THIRD-PARTY-NOTICES",
+          "reason": "no_patch"
+        },
+        {
+          "path": "package-lock.json",
+          "reason": "excluded"
+        }
+      ],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "samples": 0,
+        "lowConfidence": 1
+      }
+    },
+    {
+      "row": "focus-pr262",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:focus-pr262:0",
+          "answer": {
+            "type": "score",
+            "score": 2.51,
+            "confidence": 0.51,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.1,
+              "2": 0.28,
+              "3": 0.62
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [
+        {
+          "path": "src/main/pty/WsBridge.ts",
+          "reason": "removed"
+        }
+      ],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.8366666666666666,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "focus-pr3",
+      "expected": 2,
+      "answers": [
+        {
+          "key": "dim:focus-pr3:0",
+          "answer": {
+            "type": "score",
+            "score": 2.59,
+            "confidence": 0.59,
+            "legend": {
+              "0": "Unrelated changes across many areas.",
+              "1": "Mostly one purpose with several unrelated changes.",
+              "2": "One purpose with a small unrelated change.",
+              "3": "One clear purpose."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.09,
+              "2": 0.21,
+              "3": 0.7
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [
+        {
+          "path": "package-lock.json",
+          "reason": "excluded"
+        }
+      ],
+      "composite": {
+        "id": "change_focus",
+        "weight": 1,
+        "value": 0.8633333333333333,
+        "samples": 1,
+        "lowConfidence": 0
+      }
+    }
+  ]
+}

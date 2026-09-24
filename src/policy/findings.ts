@@ -120,6 +120,22 @@ export function deriveFindings(
   return [...byFingerprint.values()].sort(compareFindings);
 }
 
+/**
+ * Rule ids of verdicts that did not fire and whose answer was an abstain label: the rule was asked
+ * but could not be judged, which is not the same as a clean result. One entry per question.
+ */
+export function abstentions(meta: Map<string, QuestionMeta>, answers: Map<string, Answer>, cfg: ResolvedConfig): string[] {
+  const rules = new Map(cfg.rules.map((r) => [r.id, r]));
+  const out: string[] = [];
+  for (const [key, m] of meta) {
+    const rule = rules.get(m.target);
+    const answer = answers.get(key);
+    if (m.role !== "verdict" || rule?.type !== "choice" || answer?.type !== "choice") continue;
+    if (rule.abstain_labels.includes(answer.choice) && !judge(rule, answer, cfg)) out.push(rule.id);
+  }
+  return out;
+}
+
 export function patternField(field: string, pr: Pick<PrInfo, "title" | "body">): string {
   if (field === "title") return pr.title;
   if (field === "description") return pr.body;
@@ -163,10 +179,14 @@ export function linePatternFindings(rules: Rule[], subjects: Subject[]): Finding
   return [...out.values()];
 }
 
-/** file_lines rules: changed files longer than max_lines at the PR head (read in code). */
+/**
+ * file_lines rules: changed files longer than max_lines at the PR head (read in code). The length
+ * before the PR is the head length minus the diff's additions plus its deletions, so no second read
+ * is needed; unless report_existing is set, a file that was over the limit and did not grow is skipped.
+ */
 export async function fileLinesFindings(
   rules: Rule[],
-  files: { path: string; status: string }[],
+  files: { path: string; status: string; additions: number; deletions: number }[],
   read: (path: string) => Promise<string | undefined>,
 ): Promise<Finding[]> {
   const out: Finding[] = [];
@@ -177,6 +197,9 @@ export async function fileLinesFindings(
       if (text === undefined) continue;
       const count = text.replace(/\n$/, "").split("\n").length;
       if (count <= rule.max_lines) continue;
+      const before = file.status === "added" ? 0 : count - file.additions + file.deletions;
+      const worse = before <= rule.max_lines || count > before;
+      if (!worse && !rule.report_existing) continue;
       const subject: Subject = { kind: "file", key: `${file.path}#size`, path: file.path, hunks: [], addedLines: 0, locations: new Map() };
       out.push({
         rule,
@@ -184,7 +207,7 @@ export async function fileLinesFindings(
         status: "confirmed",
         subject,
         probability: 1,
-        label: `${count} lines (limit ${rule.max_lines})`,
+        label: before > 0 && before !== count ? `${count} lines, was ${before} (limit ${rule.max_lines})` : `${count} lines (limit ${rule.max_lines})`,
         fingerprint: fingerprint(rule.id, subject, undefined),
       });
     }

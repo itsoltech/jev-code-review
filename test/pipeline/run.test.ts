@@ -268,10 +268,34 @@ rules:
     expect(found).toEqual(
       expect.arrayContaining([
         ["any-without-reason", 3, undefined],
-        ["component-size", undefined, "7 lines (limit 5)"],
+        ["component-size", undefined, "7 lines, was 4 (limit 5)"],
       ]),
     );
     expect(found).toHaveLength(2);
+  });
+
+  it.each<[string, number, number, boolean, string | undefined]>([
+    ["grows past the limit", 2, 0, false, "7 lines, was 5 (limit 5)"],
+    ["grows while over the limit", 1, 0, false, "7 lines, was 6 (limit 5)"],
+    ["was over the limit and did not grow", 1, 1, false, undefined],
+    ["was over the limit, with report_existing", 1, 1, true, "7 lines (limit 5)"],
+  ])("file_lines: a file that %s", async (_, additions, deletions, reportExisting, label) => {
+    const config = `
+rules:
+  - id: meta.injection
+    enabled: false
+  - id: component-size
+    type: file_lines
+    paths: ["src/**/*.ts"]
+    max_lines: 5
+    report_existing: ${reportExisting}
+`;
+    const { gh, pr } = setup({ config, patch: "@@ -1,1 +1,1 @@\n-old\n+new" });
+    gh.files = gh.files.map((f) => ({ ...f, additions, deletions }));
+    gh.repoFiles.set(`${pr.headSha}:src/users.ts`, "1\n2\n3\n4\n5\n6\n7\n");
+    const result = await run(inputs, { gh, pr, createJev: fakeJev(quietOracle).createJev, log });
+    const size = result.report!.findings.filter((f) => f.rule.id === "component-size").map((f) => f.label);
+    expect(size).toEqual(label ? [label] : []);
   });
 
   it("cuts a hunk that does not fit the context window into smaller windows", async () => {

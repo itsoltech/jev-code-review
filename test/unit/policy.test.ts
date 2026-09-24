@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeComposite } from "../../src/policy/composite.js";
-import { deriveFindings, judge, patternFindings, type Finding } from "../../src/policy/findings.js";
+import { abstentions, deriveFindings, judge, patternFindings, type Finding } from "../../src/policy/findings.js";
 import { activeRules } from "../../src/jev/questions.js";
 import { decide, type RunHealth } from "../../src/policy/verdict.js";
 import type { ModelRule } from "../../src/config/schema.js";
@@ -123,6 +123,34 @@ describe("deriveFindings", () => {
   });
 });
 
+describe("abstentions", () => {
+  const cfg = cfgWith({
+    rules: [
+      {
+        id: "c",
+        type: "choice",
+        instructions: "x",
+        criteria: { present: null, absent: null, insufficient_context: null },
+        finding_labels: { present: "minor" },
+        abstain_labels: ["insufficient_context"],
+      },
+      { id: "plain", type: "choice", instructions: "x", criteria: { present: null, absent: null, insufficient_context: null }, finding_labels: { present: "minor" } },
+    ],
+  });
+  const s = hunk();
+
+  it("counts verdicts answered with an abstain label that did not fire", () => {
+    const { meta, answers } = answersFor([
+      ["q1", { subject: s, role: "verdict", target: "c" }, choiceAnswer({ present: 0.05, absent: 0.15, insufficient_context: 0.8 })],
+      ["q2", { subject: s, role: "verdict", target: "c" }, choiceAnswer({ present: 0.05, absent: 0.9, insufficient_context: 0.05 })],
+      ["q3", { subject: s, role: "verdict", target: "c" }, choiceAnswer({ present: 0.45, absent: 0.05, insufficient_context: 0.5 })],
+      ["q4", { subject: s, role: "verdict", target: "plain" }, choiceAnswer({ present: 0.05, absent: 0.15, insufficient_context: 0.8 })],
+    ]);
+    // q3 is a needs-human finding, so it is not an abstention; "plain" declares no abstain labels.
+    expect(abstentions(meta, answers, cfg)).toEqual(["c"]);
+  });
+});
+
 describe("computeComposite", () => {
   it("weights hunks by added lines and dimensions by weight", () => {
     const cfg = cfgWith({
@@ -185,9 +213,15 @@ describe("decide", () => {
     ["errors", { errors: 1 }],
     ["budget skips", { skippedRequests: 2 }],
     ["unreviewed files", { skippedFiles: [{ path: "big.bin", reason: "no_patch" }] }],
+    ["abstentions", { abstentions: ["slop.api-mismatch"] }],
   ])("never approves with %s", (_, h) => {
     const cfg = cfgWith({ ...base, policy: { approve: { enabled: true } } });
     expect(decide([], undefined, { ...healthy, ...h }, cfg).event).toBe("COMMENT");
+  });
+
+  it("approves despite abstentions when no_abstentions is off", () => {
+    const cfg = cfgWith({ ...base, policy: { approve: { enabled: true, no_abstentions: false } } });
+    expect(decide([], undefined, { ...healthy, abstentions: ["slop.api-mismatch"] }, cfg).event).toBe("APPROVE");
   });
 
   it("still approves when only excluded files were skipped", () => {

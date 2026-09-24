@@ -20,6 +20,10 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from anonymize import redact
+
+
 DATA = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/canopy-data")
 OUT = Path(__file__).resolve().parents[1] / "datasets"
 random.seed(7)
@@ -176,21 +180,6 @@ overrides = json.loads((Path(__file__).parent / "label-overrides.json").read_tex
 for row in pr_rows:
     for rule, fix in overrides.get(row["id"], {}).items():
         row["labels"][rule] = {"violates": fix["violates"], "override": fix["reason"]}
-
-# Names of other projects that appear in canopy's public PR text are replaced before saving.
-REDACT = [(re.compile(r"gakko", re.I), "ExampleProject")]
-
-
-def redact(value):
-    if isinstance(value, str):
-        for pattern, replacement in REDACT:
-            value = pattern.sub(replacement, value)
-        return value
-    if isinstance(value, list):
-        return [redact(v) for v in value]
-    if isinstance(value, dict):
-        return {k: redact(v) for k, v in value.items()}
-    return value
 
 
 OUT.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,12 @@
+{
+  "source": "/tmp/canopy-data/pr_files.json",
+  "reserved_before_tuning": [284, 285, 286, 287, 289],
+  "labels": {
+    "284": {"violates": false, "note": "Only package.json changes, no source subject for these four rules."},
+    "285": {"violates": false, "note": "Task-to-agent messaging and error detail changes; no new literal style color, switch, any or unguarded mutable-input async write."},
+    "286": {"violates": false, "note": "Filesystem path comparison normalization; task submission snapshots before an existing awaited one-shot action. No new matching, type escape, theme literal or stale result write."},
+    "287": {"violates": false, "note": "Lucide package/icon renames; no new matching, type escape, theme literal or stale result write."},
+    "289": {"violates": false, "note": "Lucide icon renames; copied existing literal icon swatch colors in fileIcons.ts, but source .ts is outside configured theme style paths and these lines retain prior swatch values. No new matching, type escape or stale write."}
+  },
+  "qualification": "Read changed code for all five reserved PRs before any holdout model measurement; these five PR titles occur in the preexisting canopy-pr dataset, so not historically blind. All four rules have zero naturally occurring holdout violations. Do not tune on this slice."
+}

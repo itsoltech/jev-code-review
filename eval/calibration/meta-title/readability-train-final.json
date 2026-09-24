@@ -1,0 +1,638 @@
+{
+  "dataPath": "eval/calibration/meta-title/style-train-corrected.jsonl",
+  "configPath": "eval/calibration/meta-title/style.yml",
+  "model": "jev-1.13.0",
+  "returnedModels": [
+    "jev-1.13.0"
+  ],
+  "dimension": {
+    "id": "readability",
+    "description": "Readability of added code",
+    "enabled": true,
+    "scope": "hunk",
+    "paths": [
+      "**/*"
+    ],
+    "exclude_paths": [],
+    "weight": 1,
+    "instructions": "How easy is it to read and understand the added lines (marked \"+\") of `changes.lines`?",
+    "criteria": [
+      "Very hard to follow; deeply nested, cryptic or dense.",
+      "Hard to follow in places.",
+      "Readable with minor effort.",
+      "Clear and straightforward."
+    ],
+    "min_confidence": 0.4
+  },
+  "requests": 25,
+  "inputTokens": 52385,
+  "errors": [],
+  "skippedRequests": [],
+  "results": [
+    {
+      "row": "pr135-tmp-prefix",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:pr135-tmp-prefix:0",
+          "answer": {
+            "type": "score",
+            "score": 2.71,
+            "confidence": 0.71,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.27,
+              "3": 0.72
+            }
+          }
+        },
+        {
+          "key": "dim:pr135-tmp-prefix:1",
+          "answer": {
+            "type": "score",
+            "score": 2.49,
+            "confidence": 0.49,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.02,
+              "2": 0.46,
+              "3": 0.52
+            }
+          }
+        },
+        {
+          "key": "dim:pr135-tmp-prefix:2",
+          "answer": {
+            "type": "score",
+            "score": 2.49,
+            "confidence": 0.49,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.03,
+              "2": 0.45,
+              "3": 0.52
+            }
+          }
+        },
+        {
+          "key": "dim:pr135-tmp-prefix:3",
+          "answer": {
+            "type": "score",
+            "score": 2.51,
+            "confidence": 0.51,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.03,
+              "2": 0.43,
+              "3": 0.54
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.852200647249191,
+        "samples": 4,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "pr33-object-accumulator",
+      "expected": 2,
+      "answers": [
+        {
+          "key": "dim:pr33-object-accumulator:0",
+          "answer": {
+            "type": "score",
+            "score": 2.92,
+            "confidence": 0.92,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.08,
+              "3": 0.92
+            }
+          }
+        },
+        {
+          "key": "dim:pr33-object-accumulator:1",
+          "answer": {
+            "type": "score",
+            "score": 2.89,
+            "confidence": 0.89,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.1,
+              "3": 0.9
+            }
+          }
+        },
+        {
+          "key": "dim:pr33-object-accumulator:2",
+          "answer": {
+            "type": "score",
+            "score": 2.99,
+            "confidence": 0.99,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.01,
+              "3": 0.99
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.9723809523809523,
+        "samples": 3,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "pr3-coordinate-short-names",
+      "expected": 2,
+      "answers": [
+        {
+          "key": "dim:pr3-coordinate-short-names:0",
+          "answer": {
+            "type": "score",
+            "score": 2.56,
+            "confidence": 0.56,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.41,
+              "3": 0.58
+            }
+          }
+        },
+        {
+          "key": "dim:pr3-coordinate-short-names:1",
+          "answer": {
+            "type": "score",
+            "score": 2.79,
+            "confidence": 0.79,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.2,
+              "3": 0.8
+            }
+          }
+        },
+        {
+          "key": "dim:pr3-coordinate-short-names:2",
+          "answer": {
+            "type": "score",
+            "score": 2.54,
+            "confidence": 0.54,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.04,
+              "2": 0.38,
+              "3": 0.58
+            }
+          }
+        },
+        {
+          "key": "dim:pr3-coordinate-short-names:3",
+          "answer": {
+            "type": "score",
+            "score": 2.15,
+            "confidence": 0.63,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.1,
+              "2": 0.64,
+              "3": 0.26
+            }
+          }
+        },
+        {
+          "key": "dim:pr3-coordinate-short-names:4",
+          "answer": {
+            "type": "score",
+            "score": 2.97,
+            "confidence": 0.97,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.03,
+              "3": 0.97
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.8394887525562373,
+        "samples": 5,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "pr66-response-data",
+      "expected": 2,
+      "answers": [
+        {
+          "key": "dim:pr66-response-data:0",
+          "answer": {
+            "type": "score",
+            "score": 2.74,
+            "confidence": 0.74,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.25,
+              "3": 0.74
+            }
+          }
+        },
+        {
+          "key": "dim:pr66-response-data:1",
+          "answer": {
+            "type": "score",
+            "score": 2.62,
+            "confidence": 0.62,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.36,
+              "3": 0.63
+            }
+          }
+        },
+        {
+          "key": "dim:pr66-response-data:2",
+          "answer": {
+            "type": "score",
+            "score": 2.58,
+            "confidence": 0.58,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.04,
+              "2": 0.32,
+              "3": 0.64
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.8911284046692608,
+        "samples": 3,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "pr262-buffer-data",
+      "expected": 3,
+      "answers": [
+        {
+          "key": "dim:pr262-buffer-data:0",
+          "answer": {
+            "type": "score",
+            "score": 2.88,
+            "confidence": 0.88,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.12,
+              "3": 0.88
+            }
+          }
+        },
+        {
+          "key": "dim:pr262-buffer-data:1",
+          "answer": {
+            "type": "score",
+            "score": 2.7,
+            "confidence": 0.7,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.28,
+              "3": 0.71
+            }
+          }
+        },
+        {
+          "key": "dim:pr262-buffer-data:2",
+          "answer": {
+            "type": "score",
+            "score": 2.89,
+            "confidence": 0.89,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.1,
+              "3": 0.9
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.9354587688734031,
+        "samples": 3,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "mutation-pr135-misleading-tmp",
+      "expected": 1,
+      "answers": [
+        {
+          "key": "dim:mutation-pr135-misleading-tmp:0",
+          "answer": {
+            "type": "score",
+            "score": 2.72,
+            "confidence": 0.72,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.26,
+              "3": 0.73
+            }
+          }
+        },
+        {
+          "key": "dim:mutation-pr135-misleading-tmp:1",
+          "answer": {
+            "type": "score",
+            "score": 2.46,
+            "confidence": 0.46,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.03,
+              "2": 0.48,
+              "3": 0.49
+            }
+          }
+        },
+        {
+          "key": "dim:mutation-pr135-misleading-tmp:2",
+          "answer": {
+            "type": "score",
+            "score": 2.52,
+            "confidence": 0.52,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.03,
+              "2": 0.42,
+              "3": 0.55
+            }
+          }
+        },
+        {
+          "key": "dim:mutation-pr135-misleading-tmp:3",
+          "answer": {
+            "type": "score",
+            "score": 2.47,
+            "confidence": 0.47,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.04,
+              "2": 0.45,
+              "3": 0.51
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.8514886731391585,
+        "samples": 4,
+        "lowConfidence": 0
+      }
+    },
+    {
+      "row": "mutation-pr262-misleading-data",
+      "expected": 1,
+      "answers": [
+        {
+          "key": "dim:mutation-pr262-misleading-data:0",
+          "answer": {
+            "type": "score",
+            "score": 2.87,
+            "confidence": 0.87,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.12,
+              "3": 0.88
+            }
+          }
+        },
+        {
+          "key": "dim:mutation-pr262-misleading-data:1",
+          "answer": {
+            "type": "score",
+            "score": 2.69,
+            "confidence": 0.69,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0.01,
+              "2": 0.29,
+              "3": 0.7
+            }
+          }
+        },
+        {
+          "key": "dim:mutation-pr262-misleading-data:2",
+          "answer": {
+            "type": "score",
+            "score": 2.86,
+            "confidence": 0.86,
+            "legend": {
+              "0": "Very hard to follow; deeply nested, cryptic or dense.",
+              "1": "Hard to follow in places.",
+              "2": "Readable with minor effort.",
+              "3": "Clear and straightforward."
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.14,
+              "3": 0.86
+            }
+          }
+        }
+      ],
+      "missing": [],
+      "skipped": [],
+      "composite": {
+        "id": "readability",
+        "weight": 1,
+        "value": 0.931033681765389,
+        "samples": 3,
+        "lowConfidence": 0
+      }
+    }
+  ]
+}

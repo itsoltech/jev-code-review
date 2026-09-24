@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { estimateTokens, packQuestions } from "../../src/jev/batch.js";
-import { QuestionKeys, questionsFor } from "../../src/jev/questions.js";
-import { buildState, isTestPath, parseDescription } from "../../src/jev/state.js";
+import type { ModelRule } from "../../src/config/schema.js";
+import { parsePatch } from "../../src/diff/parse.js";
+import { hasCandidate, QuestionKeys, questionsFor } from "../../src/jev/questions.js";
+import { buildState, hunkSubject, isTestPath, parseDescription } from "../../src/jev/state.js";
 import { codeSnippet, inlineCode, renderTemplate } from "../../src/report/template.js";
 import { cfgWith, hunk, noulRule, pr } from "../helpers/factories.js";
 
@@ -49,6 +51,30 @@ describe("questionsFor", () => {
     const keys = new QuestionKeys();
     const where = questionsFor(hunk("src/a.ts", ["a", "b", "c"]), cfg, keys, "eager").questions[1]!.question;
     expect(where.type === "choice" && Object.keys(where.criteria)).toEqual(["L001", "L002", "L003"]);
+  });
+});
+
+describe("hasCandidate", () => {
+  // slop.nested-ternary's pre-filter from src/presets/code-slop.yml.
+  const rule = cfgWith({ rules: [{ ...noulRule("t"), candidate_regex: "(?<!\\?)\\?(?![.?])[^:]*:[^;]*(?<!\\?)\\?(?![.?])" }] }).rules[0] as ModelRule;
+
+  it("matches an expression split over several added lines", () => {
+    expect(hasCandidate(rule, hunk("src/a.ts", ["const x = a ? b : c ? d : e;"]))).toBe(true);
+    expect(hasCandidate(rule, hunk("src/a.ts", ["const x = a", "  ? b", "  : c", "    ? d", "    : e;"]))).toBe(true);
+  });
+
+  it("matches removed lines only with candidate_removed", () => {
+    const patch = "@@ -1,1 +1,1 @@\n-expect(status).toBe(400);\n+log(status);";
+    const subject = hunkSubject("src/a.test.ts#0", parsePatch("src/a.test.ts", patch)[0]!);
+    const expectRule = (removed: boolean) =>
+      cfgWith({ rules: [{ ...noulRule("w"), candidate_regex: "\\bexpect\\(", candidate_removed: removed }] }).rules[0] as ModelRule;
+    expect(hasCandidate(expectRule(false), subject)).toBe(false);
+    expect(hasCandidate(expectRule(true), subject)).toBe(true);
+  });
+
+  it("does not join added lines across an unchanged line", () => {
+    const patch = "@@ -1,1 +1,3 @@\n+const x = a ? b :\n c\n+  ? d : e;";
+    expect(hasCandidate(rule, hunkSubject("src/a.ts#0", parsePatch("src/a.ts", patch)[0]!))).toBe(false);
   });
 });
 

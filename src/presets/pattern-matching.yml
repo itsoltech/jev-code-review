@@ -5,6 +5,7 @@ vars:
 
 rules:
   - id: matching.switch-statement
+    enabled: false
     description: 'switch instead of {{vars.matcher_library}} match()'
     type: pattern
     field: added_lines
