@@ -204,3 +204,7 @@ npm run all      # typecheck, tests, schema and dist bundle
 `dist/index.js` (the action), `dist/cli.js` (the npm CLI) and `schema/jev-review.schema.json` are committed; CI fails when they are stale. The pipeline is split into pure modules (`diff/`, `config/`, `jev/`, `policy/`, `report/`) and two ports (`GitHubPort`, `JevPort`), so tests run the full pipeline with an in-memory GitHub and the real TypeSafe SDK over a fake `fetch`. Uncertain findings pass through an `Escalator` interface ([src/escalation/types.ts](src/escalation/types.ts)) before the verdict; v1 ships a no-op, and a later version can send them to a reasoning model or a human queue.
 
 Releases: set `version` in package.json, then publish a GitHub release `v1.x.y` with the same version. The release workflow moves the `v1` tag and publishes the npm package through npm trusted publishing (OIDC, no token in the repository).
+
+## License
+
+[MIT](LICENSE). Use, modify and redistribute it, including commercially; keep the copyright notice.
